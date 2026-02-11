@@ -64,6 +64,61 @@ namespace UMS.Service.Services.Implementations
             };
         }
 
+        public async Task<ProfileDTO?> GetProfileAsync(int userId)
+        {
+            var user = await _context.Users
+                .Include(u => u.Student).ThenInclude(s => s!.Section)
+                .Include(u => u.Teacher)
+                .FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted);
+
+            if (user == null) return null;
+
+            var profile = new ProfileDTO
+            {
+                Email = user.Email,
+                Role = user.Role
+            };
+
+            if (user.Student != null)
+            {
+                profile.Name = user.Student.Name;
+                profile.Surname = user.Student.Surname;
+                profile.Phone = user.Student.Phone;
+                profile.PhotoUrl = user.Student.PhotoUrl;
+                profile.DateOfBirth = user.Student.DateOfBirth;
+                profile.ClassName = user.Student.Section?.Name;
+            }
+            else if (user.Teacher != null)
+            {
+                profile.Name = user.Teacher.Name;
+                profile.Surname = user.Teacher.Surname;
+                profile.Phone = user.Teacher.Phone;
+                profile.PhotoUrl = user.Teacher.PhotoUrl;
+                profile.DateOfBirth = user.Teacher.DateOfBirth;
+            }
+            else
+            {
+                profile.Name = user.Name ?? "";
+            }
+
+            return profile;
+        }
+
+        public async Task<bool> ChangePasswordAsync(int userId, ChangePasswordDTO dto)
+        {
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted);
+
+            if (user == null) return false;
+
+            if (!BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, user.PasswordHash))
+                return false;
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         private string GenerateJwtToken(User user)
         {
             var key = new SymmetricSecurityKey(

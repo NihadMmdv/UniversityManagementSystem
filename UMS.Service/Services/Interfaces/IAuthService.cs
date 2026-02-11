@@ -11,5 +11,7 @@ namespace UMS.Service.Services.Interfaces
     {
         Task<AuthResponseDTO?> LoginAsync(LoginDTO dto);
         Task<AuthResponseDTO?> RegisterAsync(RegisterDTO dto);
+        Task<ProfileDTO?> GetProfileAsync(int userId);
+        Task<bool> ChangePasswordAsync(int userId, ChangePasswordDTO dto);
     }
 }

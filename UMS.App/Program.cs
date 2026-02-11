@@ -1,5 +1,6 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
@@ -40,7 +41,12 @@ namespace UMS.UI
                     options.TokenValidationParameters = tokenValidationParameters;
                 });
 
-            builder.Services.AddAuthorization();
+            builder.Services.AddAuthorization(options =>
+            {
+                options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .Build();
+            });
 
             builder.Services.AddAutoMapper(cfg =>
             {
@@ -139,12 +145,20 @@ namespace UMS.UI
 
                         if (context.Request.Query.ContainsKey("token"))
                         {
+                            context.Response.Cookies.Delete("swagger_token", new CookieOptions
+                            {
+                                Path = "/swagger",
+                                Secure = context.Request.IsHttps,
+                                SameSite = SameSiteMode.Strict
+                            });
+
                             context.Response.Cookies.Append("swagger_token", token, new CookieOptions
                             {
-                                HttpOnly = true,
+                                HttpOnly = false,
                                 Secure = context.Request.IsHttps,
                                 SameSite = SameSiteMode.Strict,
-                                MaxAge = TimeSpan.FromHours(1)
+                                MaxAge = TimeSpan.FromHours(1),
+                                Path = "/"
                             });
                         }
 

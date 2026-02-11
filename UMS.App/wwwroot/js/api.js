@@ -56,8 +56,12 @@ const api = {
     }
 };
 
-function logout() {
+async function logout() {
+    // Clear swagger cookie directly (now possible without HttpOnly)
     document.cookie = 'swagger_token=; Max-Age=0; path=/;';
+    try {
+        await fetch(`${API_BASE}/Auth/logout`, { method: 'POST' });
+    } catch { /* ignore */ }
     localStorage.clear();
     sessionStorage.clear();
     window.location.href = 'index.html';

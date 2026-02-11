@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using UMS.Service.DTOs.AuthDTOs;
 using UMS.Service.Services.Interfaces;
 
@@ -27,6 +28,27 @@ namespace UMS.App.Controllers
             return Ok(result);
         }
 
+        [AllowAnonymous]
+        [HttpPost("logout")]
+        public IActionResult Logout()
+        {
+            // Delete cookie at the current explicit path
+            Response.Cookies.Delete("swagger_token", new CookieOptions
+            {
+                Path = "/",
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Strict
+            });
+            // Delete legacy cookie the browser scoped to /swagger
+            Response.Cookies.Delete("swagger_token", new CookieOptions
+            {
+                Path = "/swagger",
+                Secure = Request.IsHttps,
+                SameSite = SameSiteMode.Strict
+            });
+            return Ok(new { message = "Logged out" });
+        }
+
         [Authorize(Roles = "Admin")]
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDTO dto)
@@ -36,6 +58,28 @@ namespace UMS.App.Controllers
                 return BadRequest(new { message = "Email already exists" });
 
             return Ok(result);
+        }
+
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IActionResult> GetProfile()
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var profile = await _authService.GetProfileAsync(userId);
+            if (profile == null) return NotFound();
+            return Ok(profile);
+        }
+
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDTO dto)
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var success = await _authService.ChangePasswordAsync(userId, dto);
+            if (!success)
+                return BadRequest(new { message = "Current password is incorrect" });
+
+            return Ok(new { message = "Password changed successfully" });
         }
     }
 }

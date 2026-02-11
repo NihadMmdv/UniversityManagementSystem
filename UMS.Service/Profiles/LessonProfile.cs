@@ -19,7 +19,7 @@ namespace UMS.Service.Profiles
                 opt => opt.MapFrom(src => src.Sections.Select(s => s.Id)))
                 .ForMember(
                 dest => dest.TeacherIds,
-                opt => opt.MapFrom(src => src.Sections.Select(s => s.Id)));
+                opt => opt.MapFrom(src => src.Teachers.Select(t => t.Id)));
 
             CreateMap<Lesson, LessonCreateDTO>()
                 .ForMember(
@@ -27,7 +27,7 @@ namespace UMS.Service.Profiles
                 opt => opt.MapFrom(src => src.Sections.Select(s => s.Id)))
                 .ForMember(
                 dest => dest.TeacherIds,
-                opt => opt.MapFrom(src => src.Sections.Select(s => s.Id)));
+                opt => opt.MapFrom(src => src.Teachers.Select(t => t.Id)));
 
             CreateMap<LessonCreateDTO, Lesson>()
                 .ForMember(dest => dest.Sections, opt => opt.Ignore())
