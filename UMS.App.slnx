@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="UMS.App/UMS.App.csproj" />
+  <Project Path="UMS.App/UMS.UI.csproj" />
   <Project Path="UMS.DAL/UMS.DAL.csproj" />
   <Project Path="UMS.Service/UMS.Service.csproj" />
 </Solution>

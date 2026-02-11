@@ -16,6 +16,7 @@ namespace UMS.DAL
         public DbSet<Lesson> Lessons { get; set; }
         public DbSet<Section> Sections { get; set; }
         public DbSet<Exam> Exams { get; set; }
+        public DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -43,6 +44,22 @@ namespace UMS.DAL
                 .HasMany(l => l.Sections)
                 .WithMany(s => s.Lessons)
                 .UsingEntity(j => j.ToTable("LessonSection"));
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Student)
+                .WithOne()
+                .HasForeignKey<User>(u => u.StudentId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Teacher)
+                .WithOne()
+                .HasForeignKey<User>(u => u.TeacherId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
         }
 
         public override int SaveChanges()

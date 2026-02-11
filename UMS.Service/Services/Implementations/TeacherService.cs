@@ -34,14 +34,28 @@ namespace UMS.Service.Services.Implementations
                                     .ToListAsync();
                 entity.Lessons = lessons;
             }
+
             await _context.Set<Teacher>().AddAsync(entity);
             await _context.SaveChangesAsync();
 
-            var resuly = await _context.Teachers
+            // Auto-create a User account for the teacher
+            var user = new User
+            {
+                Email = dto.Email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword($"{dto.Name}{dto.DateOfBirth:yyyyMMdd}"),
+                Role = "Teacher",
+                Name = $"{dto.Name} {dto.Surname}",
+                TeacherId = entity.Id
+            };
+            await _context.Users.AddAsync(user);
+            await _context.SaveChangesAsync();
+
+            var result = await _context.Teachers
                 .AsNoTracking()
                 .Include(t => t.Lessons)
                 .FirstOrDefaultAsync(t => t.Id == entity.Id);
-            return _mapper.Map<TeacherCreateDTO>(entity);
+
+            return _mapper.Map<TeacherCreateDTO>(result!);
         }
 
         public async Task<TeacherGetDTO> GetByIdAsync(int id)
@@ -68,7 +82,7 @@ namespace UMS.Service.Services.Implementations
         public async Task<TeacherCreateDTO> UpdateAsync(int id, TeacherCreateDTO dto)
         {
             var entity = await _context.Teachers
-                .Include(l => l.Lessons)
+                .Include(t => t.Lessons)
                 .FirstOrDefaultAsync(e => !e.IsDeleted && e.Id == id);
 
             if (entity == null) throw new KeyNotFoundException($"Teacher with id {id} not found.");
@@ -80,9 +94,16 @@ namespace UMS.Service.Services.Implementations
                 var lessons = await _context.Lessons
                     .Where(l => dto.LessonIds.Contains(l.Id))
                     .ToListAsync();
-
                 entity.Lessons.Clear();
                 foreach (var l in lessons) entity.Lessons.Add(l);
+            }
+
+            // Sync user email if teacher email changed
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.TeacherId == id && !u.IsDeleted);
+            if (user != null)
+            {
+                user.Email = dto.Email;
+                user.Name = $"{dto.Name} {dto.Surname}";
             }
 
             entity.LastModifiedTime = DateTime.UtcNow;
@@ -93,16 +114,25 @@ namespace UMS.Service.Services.Implementations
                 .Include(t => t.Lessons)
                 .FirstOrDefaultAsync(t => t.Id == id);
 
-            return _mapper.Map<TeacherCreateDTO>(entity);
+            return _mapper.Map<TeacherCreateDTO>(updated!);
         }
 
         public async Task<TeacherCreateDTO> DeleteAsync(int id)
         {
             var entity = await _context.Set<Teacher>().FirstOrDefaultAsync(e => !e.IsDeleted && e.Id == id);
+            if (entity == null) throw new KeyNotFoundException($"Teacher with id {id} not found.");
 
             entity.IsDeleted = true;
             entity.DeletedTime = DateTime.UtcNow;
             entity.LastModifiedTime = DateTime.UtcNow;
+
+            // Soft-delete the linked user account too
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.TeacherId == id && !u.IsDeleted);
+            if (user != null)
+            {
+                user.IsDeleted = true;
+                user.DeletedTime = DateTime.UtcNow;
+            }
 
             await _context.SaveChangesAsync();
 

@@ -29,6 +29,19 @@ namespace UMS.Service.Services.Implementations
             var entity = _mapper.Map<Student>(dto);
             await _context.Set<Student>().AddAsync(entity);
             await _context.SaveChangesAsync();
+
+            // Auto-create a User account for the student
+            var user = new User
+            {
+                Email = dto.Email,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword($"{dto.Name}{dto.DateOfBirth:yyyyMMdd}"),
+                Role = "Student",
+                Name = $"{dto.Name} {dto.Surname}",
+                StudentId = entity.Id
+            };
+            await _context.Users.AddAsync(user);
+            await _context.SaveChangesAsync();
+
             return _mapper.Map<StudentCreateDTO>(entity);
         }
 
@@ -60,6 +73,14 @@ namespace UMS.Service.Services.Implementations
 
             _mapper.Map(dto, entity);
 
+            // Sync user email if student email changed
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.StudentId == id && !u.IsDeleted);
+            if (user != null)
+            {
+                user.Email = dto.Email;
+                user.Name = $"{dto.Name} {dto.Surname}";
+            }
+
             entity.LastModifiedTime = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
@@ -75,6 +96,14 @@ namespace UMS.Service.Services.Implementations
             entity.IsDeleted = true;
             entity.DeletedTime = DateTime.UtcNow;
             entity.LastModifiedTime = DateTime.UtcNow;
+
+            // Soft-delete the linked user account too
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.StudentId == id && !u.IsDeleted);
+            if (user != null)
+            {
+                user.IsDeleted = true;
+                user.DeletedTime = DateTime.UtcNow;
+            }
 
             await _context.SaveChangesAsync();
 

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UMS.DAL;
@@ -12,9 +13,11 @@ using UMS.DAL;
 namespace UMS.DAL.Migrations
 {
     [DbContext(typeof(CustomDBContext))]
-    partial class CustomDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260211063059_User-Roles-added")]
+    partial class UserRolesadded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -284,22 +287,7 @@ namespace UMS.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("StudentId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TeacherId")
-                        .HasColumnType("integer");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("Email")
-                        .IsUnique();
-
-                    b.HasIndex("StudentId")
-                        .IsUnique();
-
-                    b.HasIndex("TeacherId")
-                        .IsUnique();
 
                     b.ToTable("Users");
                 });
@@ -362,23 +350,6 @@ namespace UMS.DAL.Migrations
                         .IsRequired();
 
                     b.Navigation("Section");
-                });
-
-            modelBuilder.Entity("UMS.DAL.Entities.User", b =>
-                {
-                    b.HasOne("UMS.DAL.Entities.Student", "Student")
-                        .WithOne()
-                        .HasForeignKey("UMS.DAL.Entities.User", "StudentId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.HasOne("UMS.DAL.Entities.Teacher", "Teacher")
-                        .WithOne()
-                        .HasForeignKey("UMS.DAL.Entities.User", "TeacherId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Student");
-
-                    b.Navigation("Teacher");
                 });
 
             modelBuilder.Entity("UMS.DAL.Entities.Section", b =>

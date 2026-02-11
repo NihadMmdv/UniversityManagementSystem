@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -6,15 +7,16 @@ using UMS.Service.DTOs.LessonDTOs;
 using UMS.Service.Services.Implementations;
 using UMS.Service.Services.Interfaces;
 
-namespace UMS.App.Controllers
+namespace UMS.UI.Controllers
 {
-    [ApiController]
+    [Authorize(Roles = "Admin")]
     [Route("api/[controller]")]
-    public class LessonsController : ControllerBase
+    [ApiController]
+    public class LessonController : ControllerBase
     {
         private readonly ILessonService _LessonService;
 
-        public LessonsController(ILessonService LessonService)
+        public LessonController(ILessonService LessonService)
         {
             _LessonService = LessonService;
         }

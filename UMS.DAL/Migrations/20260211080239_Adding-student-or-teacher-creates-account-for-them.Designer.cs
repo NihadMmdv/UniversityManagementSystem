@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UMS.DAL;
@@ -12,9 +13,11 @@ using UMS.DAL;
 namespace UMS.DAL.Migrations
 {
     [DbContext(typeof(CustomDBContext))]
-    partial class CustomDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260211080239_Adding-student-or-teacher-creates-account-for-them")]
+    partial class Addingstudentorteachercreatesaccountforthem
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
