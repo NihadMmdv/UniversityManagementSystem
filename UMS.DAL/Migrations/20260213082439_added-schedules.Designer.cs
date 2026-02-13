@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UMS.DAL;
@@ -12,9 +13,11 @@ using UMS.DAL;
 namespace UMS.DAL.Migrations
 {
     [DbContext(typeof(CustomDBContext))]
-    partial class CustomDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260213082439_added-schedules")]
+    partial class addedschedules
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,21 +54,6 @@ namespace UMS.DAL.Migrations
                     b.HasIndex("TeachersId");
 
                     b.ToTable("TeacherLesson", (string)null);
-                });
-
-            modelBuilder.Entity("ScheduleTeacher", b =>
-                {
-                    b.Property<int>("ScheduleId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TeachersId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("ScheduleId", "TeachersId");
-
-                    b.HasIndex("TeachersId");
-
-                    b.ToTable("ScheduleTeacher", (string)null);
                 });
 
             modelBuilder.Entity("UMS.DAL.Entities.Exam", b =>
@@ -376,21 +364,6 @@ namespace UMS.DAL.Migrations
                     b.HasOne("UMS.DAL.Entities.Lesson", null)
                         .WithMany()
                         .HasForeignKey("LessonsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("UMS.DAL.Entities.Teacher", null)
-                        .WithMany()
-                        .HasForeignKey("TeachersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("ScheduleTeacher", b =>
-                {
-                    b.HasOne("UMS.DAL.Entities.Schedule", null)
-                        .WithMany()
-                        .HasForeignKey("ScheduleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

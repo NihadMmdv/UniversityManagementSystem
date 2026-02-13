@@ -23,6 +23,7 @@
                     <li class="nav-item"><a class="nav-link" href="#" data-section="lessons">Lessons</a></li>
                     <li class="nav-item"><a class="nav-link" href="#" data-section="sections">Classes</a></li>
                     <li class="nav-item"><a class="nav-link" href="#" data-section="exams">Exams</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" data-section="schedules">Schedules</a></li>
                 </ul>
                 <div class="d-flex align-items-center gap-2">
                     <a id="swaggerBtn" href="#" target="_blank" class="btn btn-warning btn-sm">
@@ -146,6 +147,24 @@
                     </table>
                 </div>
             </div>
+
+            <!-- Schedules -->
+            <div id="schedules-section" class="section d-none">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2>Schedules</h2>
+                    <button class="btn btn-primary" onclick="openScheduleModal()"><i class="bi bi-plus-lg"></i> Add Schedule</button>
+                </div>
+                <div class="input-group mt-3">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="schedulesSearch" placeholder="Search schedules by lesson, class, teacher, day...">
+                </div>
+                <div class="table-responsive mt-2">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark"><tr><th>ID</th><th>Lesson</th><th>Class</th><th>Teacher</th><th>Day</th><th>Start</th><th>End</th><th>Actions</th></tr></thead>
+                        <tbody id="schedulesTable"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -236,6 +255,36 @@
                     <div class="mb-3"><label class="form-label">Score</label><input type="number" class="form-control" id="examScore" min="0" max="100" required></div>
                 </div>
                 <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" onclick="saveExam()">Save</button></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Modal -->
+    <div class="modal fade" id="scheduleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title" id="scheduleModalTitle">Add Schedule</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <input type="hidden" id="scheduleId">
+                    <div class="mb-3"><label class="form-label">Lesson</label><div id="scheduleLessonPicker"></div></div>
+                    <div class="mb-3"><label class="form-label">Class</label><div id="scheduleSectionPicker"></div></div>
+                    <div class="mb-3"><label class="form-label">Teacher</label><div id="scheduleTeacherPicker"></div></div>
+                    <div class="mb-3">
+                        <label class="form-label">Day of Week</label>
+                        <select class="form-select" id="scheduleDayOfWeek">
+                            <option value="1">Monday</option>
+                            <option value="2">Tuesday</option>
+                            <option value="3">Wednesday</option>
+                            <option value="4">Thursday</option>
+                            <option value="5">Friday</option>
+                            <option value="6">Saturday</option>
+                            <option value="0">Sunday</option>
+                        </select>
+                    </div>
+                    <div class="mb-3"><label class="form-label">Start Time</label><input type="time" class="form-control" id="scheduleStartTime" required></div>
+                    <div class="mb-3"><label class="form-label">End Time</label><input type="time" class="form-control" id="scheduleEndTime" required></div>
+                </div>
+                <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" onclick="saveSchedule()">Save</button></div>
             </div>
         </div>
     </div>

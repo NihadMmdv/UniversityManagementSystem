@@ -30,6 +30,17 @@
     background-color: #f0f0f0;
 }
 
+/* ── Course card hover ── */
+.course-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+    .course-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(13, 110, 253, 0.25) !important;
+    }
+
 /* ── Expandable class rows ── */
 .section-row {
     cursor: pointer;

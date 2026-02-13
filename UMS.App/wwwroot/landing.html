@@ -40,31 +40,37 @@
                 </div>
                 <div class="row g-4">
                     <div class="col-md-4">
-                        <div class="card h-100 shadow-sm">
-                            <div class="card-body text-center">
-                                <i class="bi bi-book-fill display-3 text-primary"></i>
-                                <h4 class="mt-3">Courses</h4>
-                                <p class="text-muted">Browse available lessons and course materials.</p>
+                        <a href="courses.html" class="text-decoration-none">
+                            <div class="card h-100 shadow-sm course-card">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-book-fill display-3 text-primary"></i>
+                                    <h4 class="mt-3 text-dark">Courses</h4>
+                                    <p class="text-muted">Browse available lessons and course materials.</p>
+                                </div>
                             </div>
-                        </div>
+                        </a>
+                    </div>
+                    <div class="col-md-4 d-none" id="examsCard">
+                        <a href="exams.html" class="text-decoration-none">
+                            <div class="card h-100 shadow-sm course-card">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-pencil-square display-3 text-danger"></i>
+                                    <h4 class="mt-3 text-dark">Exams</h4>
+                                    <p class="text-muted">View your exam results and scores.</p>
+                                </div>
+                            </div>
+                        </a>
                     </div>
                     <div class="col-md-4">
-                        <div class="card h-100 shadow-sm">
-                            <div class="card-body text-center">
-                                <i class="bi bi-calendar-event-fill display-3 text-success"></i>
-                                <h4 class="mt-3">Schedule</h4>
-                                <p class="text-muted">View your class schedule and exam dates.</p>
+                        <a href="schedule.html" class="text-decoration-none">
+                            <div class="card h-100 shadow-sm course-card">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-calendar-event-fill display-3 text-success"></i>
+                                    <h4 class="mt-3 text-dark">Schedule</h4>
+                                    <p class="text-muted">View your class schedule and exam dates.</p>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card h-100 shadow-sm">
-                            <div class="card-body text-center">
-                                <i class="bi bi-person-badge-fill display-3 text-info"></i>
-                                <h4 class="mt-3">Profile</h4>
-                                <p class="text-muted">View your academic profile and details.</p>
-                            </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
             </div>
@@ -146,6 +152,11 @@
                 document.getElementById('profileClassRow').style.display = '';
                 document.getElementById('profileClassRow').classList.add('d-flex');
                 document.getElementById('profileClass').textContent = profile.className;
+            }
+
+            // Show Exams card only for students
+            if (profile.role === 'Student') {
+                document.getElementById('examsCard').classList.remove('d-none');
             }
         } catch (e) { console.error('Failed to load profile', e); }
     });

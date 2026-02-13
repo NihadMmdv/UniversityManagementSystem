@@ -52,6 +52,7 @@ namespace UMS.UI
             {
                 cfg.AddProfile<ExamProfile>();
                 cfg.AddProfile<LessonProfile>();
+                cfg.AddProfile<ScheduleProfile>();
                 cfg.AddProfile<SectionProfile>();
                 cfg.AddProfile<StudentProfile>();
                 cfg.AddProfile<TeacherProfile>();
@@ -60,6 +61,7 @@ namespace UMS.UI
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IExamService, ExamService>();
             builder.Services.AddScoped<ILessonService, LessonService>();
+            builder.Services.AddScoped<IScheduleService, ScheduleService>();
             builder.Services.AddScoped<ISectionService, SectionService>();
             builder.Services.AddScoped<IStudentService, StudentService>();
             builder.Services.AddScoped<ITeacherService, TeacherService>();

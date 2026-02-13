@@ -1,0 +1,121 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMS - My Schedule</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .timetable th, .timetable td {
+            vertical-align: middle;
+            text-align: center;
+            min-width: 140px;
+        }
+
+        .timetable .slot {
+            background: #e7f1ff;
+            border-radius: 8px;
+            padding: 6px 8px;
+            margin: 2px 0;
+            font-size: 0.85em;
+        }
+
+            .timetable .slot .teacher-name {
+                font-size: 0.8em;
+                color: #6c757d;
+            }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="landing.html"><i class="bi bi-arrow-left me-2"></i>Back</a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h2 class="mb-4"><i class="bi bi-calendar-event-fill text-success me-2"></i>My Weekly Schedule</h2>
+        <div id="loading" class="text-center my-5"><div class="spinner-border text-primary"></div></div>
+        <div id="empty" class="alert alert-info d-none"><i class="bi bi-info-circle me-2"></i>No schedule entries found.</div>
+        <div class="table-responsive d-none" id="timetableWrap">
+            <table class="table table-bordered timetable">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Time</th>
+                        <th>Monday</th>
+                        <th>Tuesday</th>
+                        <th>Wednesday</th>
+                        <th>Thursday</th>
+                        <th>Friday</th>
+                        <th>Saturday</th>
+                    </tr>
+                </thead>
+                <tbody id="timetableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+    const dayOrder = [1, 2, 3, 4, 5, 6]; // Mon–Sat
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const store = localStorage.getItem('token') ? localStorage : sessionStorage;
+        if (!store.getItem('token')) { window.location.href = 'index.html'; return; }
+
+        try {
+            const schedule = await api.get('Auth/me/schedule');
+            document.getElementById('loading').classList.add('d-none');
+
+            if (!schedule || schedule.length === 0) {
+                document.getElementById('empty').classList.remove('d-none');
+                return;
+            }
+
+            // Collect unique time slots and sort them
+            const slotSet = new Set();
+            schedule.forEach(s => slotSet.add(`${s.startTime}-${s.endTime}`));
+            const slots = [...slotSet].sort();
+
+            // Build grid: slot → dayIndex → entries[]
+            const grid = {};
+            slots.forEach(sl => {
+                grid[sl] = {};
+                dayOrder.forEach(d => grid[sl][d] = []);
+            });
+
+            schedule.forEach(s => {
+                const key = `${s.startTime}-${s.endTime}`;
+                if (grid[key] && grid[key][s.dayOfWeek]) {
+                    grid[key][s.dayOfWeek].push(s);
+                }
+            });
+
+            const tbody = document.getElementById('timetableBody');
+            tbody.innerHTML = slots.map(sl => {
+                const cells = dayOrder.map(d => {
+                    const entries = grid[sl][d];
+                    if (entries.length === 0) return '<td></td>';
+                    return '<td>' + entries.map(e => {
+                        const teachers = (e.teacherNames && e.teacherNames.length > 0)
+                            ? e.teacherNames.map(n => `<i class="bi bi-person-fill"></i> ${n}`).join('<br>')
+                            : '';
+                        return `<div class="slot"><strong>${e.lessonName}</strong><br><small>${e.sectionName}</small>${teachers ? '<br><span class="teacher-name">' + teachers + '</span>' : ''}</div>`;
+                    }).join('') + '</td>';
+                }).join('');
+                return `<tr><td class="fw-bold">${sl.replace('-', '<br>')}</td>${cells}</tr>`;
+            }).join('');
+
+            document.getElementById('timetableWrap').classList.remove('d-none');
+        } catch (e) {
+            document.getElementById('loading').classList.add('d-none');
+            document.getElementById('empty').textContent = 'Failed to load schedule.';
+            document.getElementById('empty').classList.remove('d-none');
+        }
+    });
+    </script>
+</body>
+</html>

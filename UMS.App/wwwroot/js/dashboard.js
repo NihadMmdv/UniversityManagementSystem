@@ -8,6 +8,7 @@ const cache = {
     lessons: { data: null, stale: true },
     sections: { data: null, stale: true },
     exams: { data: null, stale: true },
+    schedules: { data: null, stale: true },
 };
 
 const endpointMap = {
@@ -16,6 +17,7 @@ const endpointMap = {
     lessons: 'Lesson',
     sections: 'Section',
     exams: 'Exam',
+    schedules: 'Schedule',
 };
 
 async function getCached(key) {
@@ -78,7 +80,7 @@ document.addEventListener('click', (e) => {
 // ── Smart Picker (search dropdown with 3+ char trigger) ──
 const pickers = {};
 
-function initPicker(id, { multi = true, placeholder = 'Search...' } = {}) {
+function initPicker(id, { multi = true, placeholder = 'Search...', onChange = null } = {}) {
     const container = document.getElementById(id);
     if (!container) return;
 
@@ -93,7 +95,7 @@ function initPicker(id, { multi = true, placeholder = 'Search...' } = {}) {
             <div class="picker-dropdown" id="${ddId}"></div>
         </div>`;
 
-    const state = { items: [], selected: new Map(), multi, id };
+    const state = { items: [], selected: new Map(), multi, id, onChange };
     pickers[id] = state;
 
     const input = document.getElementById(inputId);
@@ -130,6 +132,7 @@ function initPicker(id, { multi = true, placeholder = 'Search...' } = {}) {
         dd.innerHTML = '';
         dd.classList.remove('show');
         renderPickerTags(state);
+        if (state.onChange) state.onChange([...state.selected.keys()]);
     });
 
     input.addEventListener('blur', () => {
@@ -149,6 +152,7 @@ function renderPickerTags(state) {
             e.stopPropagation();
             state.selected.delete(parseInt(btn.dataset.id));
             renderPickerTags(state);
+            if (state.onChange) state.onChange([...state.selected.keys()]);
         });
     });
 }
@@ -214,6 +218,9 @@ document.addEventListener('DOMContentLoaded', () => {
     initPicker('sectionLessonPicker', { multi: true });
     initPicker('examStudentPicker', { multi: false });
     initPicker('examLessonPicker', { multi: false });
+    initPicker('scheduleLessonPicker', { multi: false, onChange: onScheduleLessonChange });
+    initPicker('scheduleSectionPicker', { multi: false });
+    initPicker('scheduleTeacherPicker', { multi: true });
 
     // Initialize search bars
     setupSearch('studentsSearch', 'studentsTable');
@@ -221,6 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupSearch('lessonsSearch', 'lessonsTable');
     setupSearch('sectionsSearch', 'sectionsTable');
     setupSearch('examsSearch', 'examsTable');
+    setupSearch('schedulesSearch', 'schedulesTable');
 
     loadDashboard();
 });
@@ -290,7 +298,7 @@ function showSection(name) {
     const searchInput = document.getElementById(`${name}Search`);
     if (searchInput) searchInput.value = '';
 
-    const loaders = { dashboard: loadDashboard, students: loadStudents, teachers: loadTeachers, lessons: loadLessons, sections: loadSections, exams: loadExams };
+    const loaders = { dashboard: loadDashboard, students: loadStudents, teachers: loadTeachers, lessons: loadLessons, sections: loadSections, exams: loadExams, schedules: loadSchedules };
     loaders[name]?.();
 }
 
@@ -690,5 +698,114 @@ async function deleteExam(id) {
         showToast('Exam', 'Deleted');
         invalidate('exams');
         loadExams();
+    } catch (e) { showToast('Error', e.message, false); }
+}
+
+// ── Schedules ──
+const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+let _allTeacherItems = [];
+let _cachedLessons = [];
+
+async function onScheduleLessonChange(selectedIds) {
+    if (_cachedLessons.length === 0) _cachedLessons = await getCached('lessons');
+    const lessonId = selectedIds[0];
+    const lesson = lessonId ? _cachedLessons.find(l => l.id === lessonId) : null;
+
+    const validIds = lesson ? new Set(lesson.teacherIds || []) : null;
+    const filtered = validIds
+        ? _allTeacherItems.filter(t => validIds.has(t.id))
+        : _allTeacherItems;
+
+    // Keep only currently selected teachers that are still valid
+    const currentIds = getPickerIds('scheduleTeacherPicker');
+    const keptIds = validIds ? currentIds.filter(id => validIds.has(id)) : currentIds;
+
+    resetPicker('scheduleTeacherPicker', filtered, keptIds);
+}
+
+async function loadSchedules() {
+    const [data, lessons, sections, teachers] = await Promise.all([
+        getCached('schedules'), getCached('lessons'), getCached('sections'), getCached('teachers')
+    ]);
+    document.getElementById('schedulesTable').innerHTML = data.map(s => `
+        <tr>
+            <td>${s.id}</td>
+            <td>${escHtml(lookupName(lessons, s.lessonId))}</td>
+            <td>${escHtml(lookupName(sections, s.sectionId))}</td>
+            <td>${renderNames(teachers, s.teacherIds)}</td>
+            <td>${dayNames[s.dayOfWeek] || s.dayOfWeek}</td>
+            <td>${escHtml(s.startTime)}</td>
+            <td>${escHtml(s.endTime)}</td>
+            <td>
+                <button class="btn btn-sm btn-warning" onclick="editSchedule(${s.id})"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-danger" onclick="deleteSchedule(${s.id})"><i class="bi bi-trash"></i></button>
+            </td>
+        </tr>`).join('');
+}
+
+async function openScheduleModal(data = null) {
+    const [lessons, sections, teachers] = await Promise.all([
+        getCached('lessons'), getCached('sections'), getCached('teachers')
+    ]);
+
+    _cachedLessons = lessons;
+    _allTeacherItems = toPickerItems(teachers);
+
+    document.getElementById('scheduleModalTitle').textContent = data ? 'Edit Schedule' : 'Add Schedule';
+    document.getElementById('scheduleId').value = data?.id || '';
+    document.getElementById('scheduleDayOfWeek').value = data?.dayOfWeek ?? 1;
+    document.getElementById('scheduleStartTime').value = data?.startTime || '';
+    document.getElementById('scheduleEndTime').value = data?.endTime || '';
+    resetPicker('scheduleLessonPicker', toPickerItems(lessons), data?.lessonId ? [data.lessonId] : []);
+    resetPicker('scheduleSectionPicker', toPickerItems(sections), data?.sectionId ? [data.sectionId] : []);
+
+    // Filter teachers by the selected lesson
+    const lessonId = data?.lessonId;
+    const lesson = lessonId ? lessons.find(l => l.id === lessonId) : null;
+    const validIds = lesson ? new Set(lesson.teacherIds || []) : null;
+    const filteredTeachers = validIds
+        ? _allTeacherItems.filter(t => validIds.has(t.id))
+        : _allTeacherItems;
+    resetPicker('scheduleTeacherPicker', filteredTeachers, data?.teacherIds || []);
+
+    new bootstrap.Modal(document.getElementById('scheduleModal')).show();
+}
+
+async function editSchedule(id) {
+    const data = await api.get(`Schedule/${id}`);
+    if (data) openScheduleModal(data);
+}
+
+async function saveSchedule() {
+    const id = document.getElementById('scheduleId').value;
+    const lessonIds = getPickerIds('scheduleLessonPicker');
+    const sectionIds = getPickerIds('scheduleSectionPicker');
+    const teacherIds = getPickerIds('scheduleTeacherPicker');
+    const body = {
+        lessonId: lessonIds[0] || null,
+        sectionId: sectionIds[0] || null,
+        teacherIds: teacherIds,
+        dayOfWeek: parseInt(document.getElementById('scheduleDayOfWeek').value),
+        startTime: document.getElementById('scheduleStartTime').value,
+        endTime: document.getElementById('scheduleEndTime').value
+    };
+    try {
+        if (id) await api.put(`Schedule/${id}`, body);
+        else await api.post('Schedule', body);
+        bootstrap.Modal.getInstance(document.getElementById('scheduleModal')).hide();
+        showToast('Schedule', id ? 'Updated successfully' : 'Created successfully');
+        invalidate('schedules');
+        loadSchedules();
+    } catch (e) { showToast('Error', e.message, false); }
+}
+
+async function deleteSchedule(id) {
+    if (!confirm('Delete this schedule?')) return;
+    try {
+        await api.delete(`Schedule/${id}`);
+        showToast('Schedule', 'Deleted');
+        invalidate('schedules');
+        loadSchedules();
     } catch (e) { showToast('Error', e.message, false); }
 }

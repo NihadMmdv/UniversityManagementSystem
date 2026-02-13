@@ -2,6 +2,9 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using UMS.Service.DTOs.AuthDTOs;
+using UMS.Service.DTOs.ExamDTOs;
+using UMS.Service.DTOs.LessonDTOs;
+using UMS.Service.DTOs.ScheduleDTOs;
 using UMS.Service.Services.Interfaces;
 
 namespace UMS.App.Controllers
@@ -68,6 +71,33 @@ namespace UMS.App.Controllers
             var profile = await _authService.GetProfileAsync(userId);
             if (profile == null) return NotFound();
             return Ok(profile);
+        }
+
+        [Authorize]
+        [HttpGet("me/lessons")]
+        public async Task<ActionResult<List<LessonGetDTO>>> GetMyLessons()
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var lessons = await _authService.GetMyLessonsAsync(userId);
+            return Ok(lessons);
+        }
+
+        [Authorize]
+        [HttpGet("me/exams")]
+        public async Task<ActionResult<List<MyExamDTO>>> GetMyExams()
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var exams = await _authService.GetMyExamsAsync(userId);
+            return Ok(exams);
+        }
+
+        [Authorize]
+        [HttpGet("me/schedule")]
+        public async Task<ActionResult<List<ScheduleEntryDTO>>> GetMySchedule()
+        {
+            var userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var schedule = await _authService.GetMyScheduleAsync(userId);
+            return Ok(schedule);
         }
 
         [Authorize]
