@@ -71,6 +71,8 @@ namespace UMS.Service.Services.Implementations
         {
             var entity = await _context.Set<Student>().FirstOrDefaultAsync(e => !e.IsDeleted && e.Id == id);
 
+            var oldSectionId = entity.SectionId;
+
             _mapper.Map(dto, entity);
 
             // Sync user email if student email changed
@@ -79,6 +81,34 @@ namespace UMS.Service.Services.Implementations
             {
                 user.Email = dto.Email;
                 user.Name = $"{dto.Name} {dto.Surname}";
+            }
+
+            // ── Sync Section.StudentIds when class changes ──
+            if (oldSectionId != entity.SectionId)
+            {
+                // Remove from old section's StudentIds
+                if (oldSectionId.HasValue)
+                {
+                    var oldSection = await _context.Sections.FirstOrDefaultAsync(s => s.Id == oldSectionId && !s.IsDeleted);
+                    if (oldSection != null)
+                    {
+                        oldSection.StudentIds?.Remove(id);
+                        oldSection.LastModifiedTime = DateTime.UtcNow;
+                    }
+                }
+
+                // Add to new section's StudentIds
+                if (entity.SectionId.HasValue)
+                {
+                    var newSection = await _context.Sections.FirstOrDefaultAsync(s => s.Id == entity.SectionId && !s.IsDeleted);
+                    if (newSection != null)
+                    {
+                        newSection.StudentIds ??= new List<int>();
+                        if (!newSection.StudentIds.Contains(id))
+                            newSection.StudentIds.Add(id);
+                        newSection.LastModifiedTime = DateTime.UtcNow;
+                    }
+                }
             }
 
             entity.LastModifiedTime = DateTime.UtcNow;

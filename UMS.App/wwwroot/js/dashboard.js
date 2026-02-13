@@ -78,7 +78,7 @@ document.addEventListener('click', (e) => {
 // ── Smart Picker (search dropdown with 3+ char trigger) ──
 const pickers = {};
 
-function initPicker(id, { multi = true, placeholder = 'Type 3+ letters to search...' } = {}) {
+function initPicker(id, { multi = true, placeholder = 'Search...' } = {}) {
     const container = document.getElementById(id);
     if (!container) return;
 
@@ -99,20 +99,22 @@ function initPicker(id, { multi = true, placeholder = 'Type 3+ letters to search
     const input = document.getElementById(inputId);
     const dd = document.getElementById(ddId);
 
-    input.addEventListener('input', () => {
+    function refreshDropdown() {
         const q = input.value.trim().toLowerCase();
-        if (q.length < 3) { dd.innerHTML = ''; dd.classList.remove('show'); return; }
 
         const matches = state.items
             .filter(i => !state.selected.has(i.id) &&
-                i.label.toLowerCase().split(/\s+/).some(w => w.startsWith(q)))
+                (q.length === 0 || i.label.toLowerCase().split(/\s+/).some(w => w.startsWith(q))))
             .slice(0, 10);
 
         dd.innerHTML = matches.length === 0
             ? '<div class="picker-item disabled">No results</div>'
             : matches.map(i => `<div class="picker-item" data-id="${i.id}">${escHtml(i.label)}</div>`).join('');
         dd.classList.add('show');
-    });
+    }
+
+    input.addEventListener('input', refreshDropdown);
+    input.addEventListener('focus', refreshDropdown);
 
     dd.addEventListener('mousedown', (e) => {
         const el = e.target.closest('.picker-item[data-id]');
@@ -178,6 +180,10 @@ function setupSearch(inputId, tableId) {
     input.addEventListener('input', () => {
         const q = input.value.toLowerCase();
         document.querySelectorAll(`#${tableId} tr`).forEach(row => {
+            if (row.classList.contains('section-detail')) {
+                if (q) row.classList.add('d-none');
+                return;
+            }
             row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
         });
     });
@@ -316,7 +322,7 @@ async function loadStudents() {
         <tr>
             <td>${s.id}</td><td>${escHtml(s.name)}</td><td>${escHtml(s.surname)}</td><td>${escHtml(s.email)}</td><td>${escHtml(s.phone)}</td>
             <td>${s.dateOfBirth}</td>
-            <td><span class="badge bg-secondary bg-opacity-75">${escHtml(lookupName(sections, s.sectionId, '#' + s.sectionId))}</span></td>
+            <td>${s.sectionId ? `<span class="badge bg-secondary bg-opacity-75">${escHtml(lookupName(sections, s.sectionId))}</span>` : '<span class="text-muted">-</span>'}</td>
             <td>
                 <button class="btn btn-sm btn-warning" onclick="editStudent(${s.id})"><i class="bi bi-pencil"></i></button>
                 <button class="btn btn-sm btn-danger" onclick="deleteStudent(${s.id})"><i class="bi bi-trash"></i></button>
@@ -357,7 +363,7 @@ async function saveStudent() {
         photoUrl: document.getElementById('studentPhoto').value,
         dateOfBirth: document.getElementById('studentDob').value,
         enrollmentDate: document.getElementById('studentEnrollment').value,
-        sectionId: sectionIds[0] || 0
+        sectionId: sectionIds[0] || null
     };
     try {
         if (id) await api.put(`Student/${id}`, body);
@@ -518,27 +524,71 @@ async function loadSections() {
     const [data, students, lessons] = await Promise.all([
         getCached('sections'), getCached('students'), getCached('lessons')
     ]);
-    document.getElementById('sectionsTable').innerHTML = data.map(s => `
-        <tr>
-            <td>${s.id}</td><td>${escHtml(s.name)}</td>
-            <td>${renderNames(students, s.studentIds)}</td>
-            <td>${renderNames(lessons, s.lessonIds)}</td>
-            <td>
-                <button class="btn btn-sm btn-warning" onclick="editSection(${s.id})"><i class="bi bi-pencil"></i></button>
-                <button class="btn btn-sm btn-danger" onclick="deleteSection(${s.id})"><i class="bi bi-trash"></i></button>
-            </td>
-        </tr>`).join('');
+    document.getElementById('sectionsTable').innerHTML = data.map(s => {
+        const sectionStudents = students.filter(st => (s.studentIds || []).includes(st.id));
+        const count = sectionStudents.length;
+
+        const detailRows = sectionStudents.length === 0
+            ? '<tr><td colspan="5" class="text-muted text-center fst-italic">No students assigned</td></tr>'
+            : sectionStudents.map(st => `
+                <tr>
+                    <td>${escHtml(st.name)}</td>
+                    <td>${escHtml(st.surname)}</td>
+                    <td>${st.dateOfBirth}</td>
+                    <td>${escHtml(st.email)}</td>
+                    <td>${escHtml(st.phone)}</td>
+                </tr>`).join('');
+
+        return `
+            <tr class="section-row" data-target="section-detail-${s.id}">
+                <td class="text-center"><i class="bi bi-chevron-right section-chevron"></i></td>
+                <td>${s.id}</td>
+                <td>${escHtml(s.name)}</td>
+                <td><span class="badge bg-info">${count} student${count !== 1 ? 's' : ''}</span></td>
+                <td>${renderNames(lessons, s.lessonIds)}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning" onclick="event.stopPropagation(); editSection(${s.id})"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteSection(${s.id})"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>
+            <tr class="section-detail d-none" id="section-detail-${s.id}">
+                <td colspan="6" class="p-0 border-0">
+                    <div class="section-detail-wrap">
+                        <table class="table table-sm table-bordered mb-0">
+                            <thead class="table-light"><tr><th>Name</th><th>Surname</th><th>Date of Birth</th><th>Email</th><th>Phone</th></tr></thead>
+                            <tbody>${detailRows}</tbody>
+                        </table>
+                    </div>
+                </td>
+            </tr>`;
+    }).join('');
 }
+
+// Toggle handler for expandable class rows
+document.addEventListener('click', (e) => {
+    const row = e.target.closest('.section-row');
+    if (!row) return;
+    const detail = document.getElementById(row.dataset.target);
+    if (!detail) return;
+    const isHidden = detail.classList.toggle('d-none');
+    const chevron = row.querySelector('.section-chevron');
+    if (chevron) chevron.classList.toggle('bi-chevron-right', isHidden);
+    if (chevron) chevron.classList.toggle('bi-chevron-down', !isHidden);
+});
 
 async function openSectionModal(data = null) {
     const [students, lessons] = await Promise.all([
         getCached('students'), getCached('lessons')
     ]);
 
+    // Only show students not assigned to another section (or already in this section)
+    const editId = data?.id || null;
+    const available = students.filter(st => !st.sectionId || st.sectionId === editId);
+
     document.getElementById('sectionModalTitle').textContent = data ? 'Edit Class' : 'Add Class';
     document.getElementById('sectionId').value = data?.id || '';
     document.getElementById('sectionName').value = data?.name || '';
-    resetPicker('sectionStudentPicker', toPickerItems(students), data?.studentIds || []);
+    resetPicker('sectionStudentPicker', toPickerItems(available), data?.studentIds || []);
     resetPicker('sectionLessonPicker', toPickerItems(lessons), data?.lessonIds || []);
     new bootstrap.Modal(document.getElementById('sectionModal')).show();
 }
@@ -583,9 +633,10 @@ async function loadExams() {
     document.getElementById('examsTable').innerHTML = data.map(e => `
         <tr>
             <td>${e.id}</td>
-            <td><span class="badge bg-secondary bg-opacity-75">${escHtml(lookupName(students, e.studentId, '#' + e.studentId))}</span></td>
-            <td><span class="badge bg-secondary bg-opacity-75">${escHtml(lookupName(lessons, e.lessonId, '#' + e.lessonId))}</span></td>
-            <td>${e.examDate}</td><td>${e.score}</td>
+            <td>${escHtml(lookupName(students, e.studentId))}</td>
+            <td>${escHtml(lookupName(lessons, e.lessonId))}</td>
+            <td>${e.examDate}</td>
+            <td>${e.score}</td>
             <td>
                 <button class="btn btn-sm btn-warning" onclick="editExam(${e.id})"><i class="bi bi-pencil"></i></button>
                 <button class="btn btn-sm btn-danger" onclick="deleteExam(${e.id})"><i class="bi bi-trash"></i></button>
@@ -617,8 +668,8 @@ async function saveExam() {
     const studentIds = getPickerIds('examStudentPicker');
     const lessonIds = getPickerIds('examLessonPicker');
     const body = {
-        studentId: studentIds[0] || 0,
-        lessonId: lessonIds[0] || 0,
+        studentId: studentIds[0] || null,
+        lessonId: lessonIds[0] || null,
         examDate: document.getElementById('examDate').value,
         score: parseInt(document.getElementById('examScore').value)
     };
@@ -628,7 +679,7 @@ async function saveExam() {
         bootstrap.Modal.getInstance(document.getElementById('examModal')).hide();
         showToast('Exam', id ? 'Updated successfully' : 'Created successfully');
         invalidate('exams');
-        loadExams(); loadDashboard();
+        loadExams();
     } catch (e) { showToast('Error', e.message, false); }
 }
 
@@ -638,6 +689,6 @@ async function deleteExam(id) {
         await api.delete(`Exam/${id}`);
         showToast('Exam', 'Deleted');
         invalidate('exams');
-        loadExams(); loadDashboard();
+        loadExams();
     } catch (e) { showToast('Error', e.message, false); }
 }

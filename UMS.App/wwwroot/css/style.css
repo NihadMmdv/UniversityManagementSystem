@@ -30,6 +30,27 @@
     background-color: #f0f0f0;
 }
 
+/* ── Expandable class rows ── */
+.section-row {
+    cursor: pointer;
+}
+
+    .section-row:hover {
+        background-color: #f0f0f0;
+    }
+
+.section-chevron {
+    transition: transform 0.2s;
+    font-size: 0.85em;
+    color: #6c757d;
+}
+
+.section-detail-wrap {
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
 /* ── Collapsible name badges in tables ── */
 .names-cell {
     display: flex;

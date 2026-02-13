@@ -14,7 +14,7 @@ namespace UMS.Service.DTOs.StudentDTOs
         public string Surname { get; set; }
         public string Email { get; set; }
         public string Phone { get; set; }
-        public int SectionId { get; set; }
+        public int? SectionId { get; set; }
         public string PhotoUrl { get; set; }
         public DateOnly DateOfBirth { get; set; }
         public DateOnly EnrollmentDate { get; set; }

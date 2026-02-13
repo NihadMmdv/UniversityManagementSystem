@@ -92,6 +92,35 @@ namespace UMS.Service.Services.Implementations
                 foreach (var l in lessons) entity.Lessons.Add(l);
             }
 
+            // ── Sync Students ↔ SectionId ──
+            if (dto.StudentIds != null)
+            {
+                // Clear SectionId on students removed from this section
+                var removedStudents = entity.Students
+                    .Where(s => !dto.StudentIds.Contains(s.Id))
+                    .ToList();
+                foreach (var s in removedStudents)
+                {
+                    s.SectionId = null;
+                    s.LastModifiedTime = DateTime.UtcNow;
+                }
+
+                // Load and assign new students
+                var newStudents = await _context.Students
+                    .Where(s => dto.StudentIds.Contains(s.Id) && !s.IsDeleted)
+                    .ToListAsync();
+
+                entity.Students.Clear();
+                foreach (var s in newStudents)
+                {
+                    s.SectionId = id;
+                    s.LastModifiedTime = DateTime.UtcNow;
+                    entity.Students.Add(s);
+                }
+
+                entity.StudentIds = dto.StudentIds;
+            }
+
             entity.LastModifiedTime = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 

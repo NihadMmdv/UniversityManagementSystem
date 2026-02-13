@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UMS.DAL;
@@ -12,9 +13,11 @@ using UMS.DAL;
 namespace UMS.DAL.Migrations
 {
     [DbContext(typeof(CustomDBContext))]
-    partial class CustomDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260213061454_Students-sectionid-should-be-nullable")]
+    partial class Studentssectionidshouldbenullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -167,6 +170,10 @@ namespace UMS.DAL.Migrations
 
                     b.Property<DateOnly>("EnrollmentDate")
                         .HasColumnType("date");
+
+                    b.Property<List<int>>("ExamIds")
+                        .IsRequired()
+                        .HasColumnType("integer[]");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
