@@ -68,6 +68,7 @@ namespace UMS.Service.Services.Implementations
             var entity = await _context.Set<Schedule>()
                 .Include(s => s.Teachers)
                 .FirstOrDefaultAsync(e => !e.IsDeleted && e.Id == id);
+            if (entity == null) throw new KeyNotFoundException($"Schedule with id {id} not found.");
 
             _mapper.Map(dto, entity);
 
@@ -88,6 +89,9 @@ namespace UMS.Service.Services.Implementations
         public async Task<ScheduleCreateDTO> DeleteAsync(int id)
         {
             var entity = await _context.Set<Schedule>().FirstOrDefaultAsync(e => !e.IsDeleted && e.Id == id);
+
+            if (entity == null)
+                throw new KeyNotFoundException($"Schedule with id {id} not found.");
 
             entity.IsDeleted = true;
             entity.DeletedTime = DateTime.UtcNow;

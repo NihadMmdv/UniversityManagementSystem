@@ -14,24 +14,24 @@ namespace UMS.UI.Controllers
     [ApiController]
     public class SectionController : ControllerBase
     {
-        private readonly ISectionService _SectionService;
+        private readonly ISectionService _sectionService;
 
-        public SectionController(ISectionService SectionService)
+        public SectionController(ISectionService sectionService)
         {
-            _SectionService = SectionService;
+            _sectionService = sectionService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SectionGetDTO>>> GetAll()
         {
-            var list = await _SectionService.GetAllAsync();
+            var list = await _sectionService.GetAllAsync();
             return Ok(list);
         }
 
         [HttpGet("{id:int}")]
         public async Task<ActionResult<SectionGetDTO>> Get(int id)
         {
-            var dto = await _SectionService.GetByIdAsync(id);
+            var dto = await _sectionService.GetByIdAsync(id);
             if (dto == null) return NotFound();
             return Ok(dto);
         }
@@ -41,7 +41,7 @@ namespace UMS.UI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var created = await _SectionService.CreateAsync(dto);
+            var created = await _sectionService.CreateAsync(dto);
 
             return Created(string.Empty, created);
         }
@@ -51,14 +51,14 @@ namespace UMS.UI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var updated = await _SectionService.UpdateAsync(id, dto);
+            var updated = await _sectionService.UpdateAsync(id, dto);
             return Ok(updated);
         }
 
         [HttpDelete("{id:int}")]
         public async Task<ActionResult<SectionCreateDTO>> Delete(int id)
         {
-            var deleted = await _SectionService.DeleteAsync(id);
+            var deleted = await _sectionService.DeleteAsync(id);
             return Ok(deleted);
         }
 
@@ -67,7 +67,7 @@ namespace UMS.UI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var updated = await _SectionService.PatchAsync(id, dto);
+            var updated = await _sectionService.PatchAsync(id, dto);
             return Ok(updated);
         }
     }

@@ -14,24 +14,24 @@ namespace UMS.UI.Controllers
     [ApiController]
     public class LessonController : ControllerBase
     {
-        private readonly ILessonService _LessonService;
+        private readonly ILessonService _lessonService;
 
-        public LessonController(ILessonService LessonService)
+        public LessonController(ILessonService lessonService)
         {
-            _LessonService = LessonService;
+            _lessonService = lessonService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<LessonGetDTO>>> GetAll()
         {
-            var list = await _LessonService.GetAllAsync();
+            var list = await _lessonService.GetAllAsync();
             return Ok(list);
         }
 
         [HttpGet("{id:int}")]
         public async Task<ActionResult<LessonGetDTO>> Get(int id)
         {
-            var dto = await _LessonService.GetByIdAsync(id);
+            var dto = await _lessonService.GetByIdAsync(id);
             if (dto == null) return NotFound();
             return Ok(dto);
         }
@@ -41,7 +41,7 @@ namespace UMS.UI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var created = await _LessonService.CreateAsync(dto);
+            var created = await _lessonService.CreateAsync(dto);
 
             return Created(string.Empty, created);
         }
@@ -51,14 +51,14 @@ namespace UMS.UI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var updated = await _LessonService.UpdateAsync(id, dto);
+            var updated = await _lessonService.UpdateAsync(id, dto);
             return Ok(updated);
         }
 
         [HttpDelete("{id:int}")]
         public async Task<ActionResult<LessonCreateDTO>> Delete(int id)
         {
-            var deleted = await _LessonService.DeleteAsync(id);
+            var deleted = await _lessonService.DeleteAsync(id);
             return Ok(deleted);
         }
 
@@ -67,7 +67,7 @@ namespace UMS.UI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var updated = await _LessonService.PatchAsync(id, dto);
+            var updated = await _lessonService.PatchAsync(id, dto);
             return Ok(updated);
         }
     }

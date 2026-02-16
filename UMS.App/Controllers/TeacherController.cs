@@ -14,24 +14,24 @@ namespace UMS.UI.Controllers
     [ApiController]
     public class TeacherController : ControllerBase
     {
-        private readonly ITeacherService _TeacherService;
+        private readonly ITeacherService _teacherService;
 
-        public TeacherController(ITeacherService TeacherService)
+        public TeacherController(ITeacherService teacherService)
         {
-            _TeacherService = TeacherService;
+            _teacherService = teacherService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TeacherGetDTO>>> GetAll()
         {
-            var list = await _TeacherService.GetAllAsync();
+            var list = await _teacherService.GetAllAsync();
             return Ok(list);
         }
 
         [HttpGet("{id:int}")]
         public async Task<ActionResult<TeacherGetDTO>> Get(int id)
         {
-            var dto = await _TeacherService.GetByIdAsync(id);
+            var dto = await _teacherService.GetByIdAsync(id);
             if (dto == null) return NotFound();
             return Ok(dto);
         }
@@ -41,7 +41,7 @@ namespace UMS.UI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var created = await _TeacherService.CreateAsync(dto);
+            var created = await _teacherService.CreateAsync(dto);
 
             return Created(string.Empty, created);
         }
@@ -51,14 +51,14 @@ namespace UMS.UI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var updated = await _TeacherService.UpdateAsync(id, dto);
+            var updated = await _teacherService.UpdateAsync(id, dto);
             return Ok(updated);
         }
 
         [HttpDelete("{id:int}")]
         public async Task<ActionResult<TeacherCreateDTO>> Delete(int id)
         {
-            var deleted = await _TeacherService.DeleteAsync(id);
+            var deleted = await _teacherService.DeleteAsync(id);
             return Ok(deleted);
         }
 
@@ -67,7 +67,7 @@ namespace UMS.UI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var updated = await _TeacherService.PatchAsync(id, dto);
+            var updated = await _teacherService.PatchAsync(id, dto);
             return Ok(updated);
         }
     }

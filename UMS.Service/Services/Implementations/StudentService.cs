@@ -59,7 +59,6 @@ namespace UMS.Service.Services.Implementations
         public async Task<IEnumerable<StudentGetDTO>> GetAllAsync()
         {
             var query = _context.Set<Student>()
-                        .AsQueryable()
                         .Where(e => !e.IsDeleted)
                         .AsNoTracking();
 
@@ -70,6 +69,9 @@ namespace UMS.Service.Services.Implementations
         public async Task<StudentCreateDTO> UpdateAsync(int id, StudentCreateDTO dto)
         {
             var entity = await _context.Set<Student>().FirstOrDefaultAsync(e => !e.IsDeleted && e.Id == id);
+
+            if (entity == null)
+                throw new KeyNotFoundException($"Student with id {id} not found.");
 
             var oldSectionId = entity.SectionId;
 

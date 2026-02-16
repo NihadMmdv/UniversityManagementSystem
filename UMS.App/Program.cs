@@ -10,6 +10,7 @@ using System.Text;
 using UMS.Service.Profiles;
 using UMS.Service.Services.Implementations;
 using UMS.Service.Services.Interfaces;
+using UMS.UI.Middleware;
 
 namespace UMS.UI
 {
@@ -70,7 +71,8 @@ namespace UMS.UI
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.AllowAnyOrigin()
+                    var origins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+                    policy.WithOrigins(origins)
                           .AllowAnyMethod()
                           .AllowAnyHeader();
                 });
@@ -180,6 +182,8 @@ namespace UMS.UI
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
 
             app.MapControllers();
 

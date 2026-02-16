@@ -56,6 +56,7 @@ namespace UMS.Service.Services.Implementations
         public async Task<ExamCreateDTO> UpdateAsync(int id, ExamCreateDTO dto)
         {
             var entity = await _context.Set<Exam>().FirstOrDefaultAsync(e => !e.IsDeleted && e.Id == id);
+            if (entity == null) throw new KeyNotFoundException($"Exam with id {id} not found.");
 
             _mapper.Map(dto, entity);
 
@@ -68,6 +69,7 @@ namespace UMS.Service.Services.Implementations
         public async Task<ExamCreateDTO> DeleteAsync(int id)
         {
             var entity = await _context.Set<Exam>().FirstOrDefaultAsync(e => !e.IsDeleted && e.Id == id);
+            if (entity == null) throw new KeyNotFoundException($"Exam with id {id} not found.");
 
             entity.IsDeleted = true;
             entity.DeletedTime = DateTime.UtcNow;

@@ -14,24 +14,24 @@ namespace UMS.UI.Controllers
     [ApiController]
     public class ExamController : ControllerBase
     {
-        private readonly IExamService _ExamService;
+        private readonly IExamService _examService;
 
-        public ExamController(IExamService ExamService)
+        public ExamController(IExamService examService)
         {
-            _ExamService = ExamService;
+            _examService = examService;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<ExamGetDTO>>> GetAll()
         {
-            var list = await _ExamService.GetAllAsync();
+            var list = await _examService.GetAllAsync();
             return Ok(list);
         }
 
         [HttpGet("{id:int}")]
         public async Task<ActionResult<ExamGetDTO>> Get(int id)
         {
-            var dto = await _ExamService.GetByIdAsync(id);
+            var dto = await _examService.GetByIdAsync(id);
             if (dto == null) return NotFound();
             return Ok(dto);
         }
@@ -41,7 +41,7 @@ namespace UMS.UI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var created = await _ExamService.CreateAsync(dto);
+            var created = await _examService.CreateAsync(dto);
 
             return Created(string.Empty, created);
         }
@@ -51,14 +51,14 @@ namespace UMS.UI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var updated = await _ExamService.UpdateAsync(id, dto);
+            var updated = await _examService.UpdateAsync(id, dto);
             return Ok(updated);
         }
 
         [HttpDelete("{id:int}")]
         public async Task<ActionResult<ExamCreateDTO>> Delete(int id)
         {
-            var deleted = await _ExamService.DeleteAsync(id);
+            var deleted = await _examService.DeleteAsync(id);
             return Ok(deleted);
         }
 
@@ -67,7 +67,7 @@ namespace UMS.UI.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var updated = await _ExamService.PatchAsync(id, dto);
+            var updated = await _examService.PatchAsync(id, dto);
             return Ok(updated);
         }
     }
