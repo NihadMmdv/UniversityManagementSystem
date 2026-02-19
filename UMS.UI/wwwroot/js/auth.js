@@ -28,7 +28,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         
         if (!response.ok) {
             const err = await response.json();
-            throw new Error(err.message || 'Login failed');
+            throw new Error(err.message || t('login.failed'));
         }
         
         const data = await response.json();

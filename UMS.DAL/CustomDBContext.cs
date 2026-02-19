@@ -18,6 +18,7 @@ namespace UMS.DAL
         public DbSet<Exam> Exams { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Schedule> Schedules { get; set; }
+        public DbSet<Material> Materials { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -60,6 +61,16 @@ namespace UMS.DAL
                 .HasMany(sc => sc.Teachers)
                 .WithMany()
                 .UsingEntity(j => j.ToTable("ScheduleTeacher"));
+
+            modelBuilder.Entity<Material>()
+                .HasOne(m => m.Lesson)
+                .WithMany()
+                .HasForeignKey(m => m.LessonId);
+
+            modelBuilder.Entity<Material>()
+                .HasOne(m => m.Teacher)
+                .WithMany()
+                .HasForeignKey(m => m.TeacherId);
 
             modelBuilder.Entity<User>()
                 .HasOne(u => u.Student)

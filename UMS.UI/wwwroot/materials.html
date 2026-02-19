@@ -1,0 +1,265 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UMS - Materials</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="landing.html"><i class="bi bi-mortarboard-fill"></i> UMS</a>
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-white me-2" id="userName"></span>
+                <div class="dropdown">
+                    <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-gear-fill"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#" id="langToggleBtn">🇦🇿 Azərbaycanca</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" id="logoutBtn"><i class="bi bi-box-arrow-right me-2"></i><span data-i18n="nav.logout">Logout</span></a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <div class="d-flex align-items-center mb-4">
+            <a href="landing.html" class="btn btn-outline-primary me-3">
+                <i class="bi bi-arrow-left"></i> <span data-i18n="btn.back">Back</span>
+            </a>
+            <h2 class="mb-0"><i class="bi bi-file-earmark-arrow-up-fill text-warning me-2"></i><span data-i18n="materials.title">My Materials</span></h2>
+        </div>
+
+        <!-- Upload Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning bg-opacity-10">
+                <h5 class="mb-0"><i class="bi bi-cloud-upload me-2"></i><span data-i18n="materials.upload">Upload Material</span></h5>
+            </div>
+            <div class="card-body">
+                <form id="uploadForm">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label" data-i18n="materials.selectLesson">Select Lesson</label>
+                            <select class="form-select" id="uploadLesson" required>
+                                <option value="" disabled selected>—</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" data-i18n="materials.titleLabel">Title</label>
+                            <input type="text" class="form-control" id="uploadTitle" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label" data-i18n="materials.typeLabel">Type</label>
+                            <select class="form-select" id="uploadType" required>
+                                <option value="0" data-i18n="materials.type.material">Material</option>
+                                <option value="1" data-i18n="materials.type.question">Question</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label" data-i18n="materials.fileLabel">File</label>
+                            <input type="file" class="form-control" id="uploadFile" required>
+                        </div>
+                        <div class="col-md-1 d-flex align-items-end">
+                            <button type="submit" class="btn btn-warning w-100">
+                                <i class="bi bi-upload"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loadingSpinner" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+        </div>
+
+        <!-- Empty state -->
+        <div id="emptyState" class="d-none text-center py-5">
+            <i class="bi bi-inbox display-1 text-muted"></i>
+            <p class="lead text-muted mt-3" data-i18n="materials.empty">You haven't uploaded any materials yet.</p>
+        </div>
+
+        <!-- Materials Table -->
+        <div id="materialsTable" class="d-none">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th data-i18n="materials.th.title">Title</th>
+                            <th data-i18n="materials.th.lesson">Lesson</th>
+                            <th data-i18n="materials.th.type">Type</th>
+                            <th data-i18n="materials.th.file">File</th>
+                            <th data-i18n="materials.th.actions">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="materialsBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Toast -->
+        <div class="toast-container position-fixed bottom-0 end-0 p-3">
+            <div id="toast" class="toast" role="alert">
+                <div class="toast-header">
+                    <strong class="me-auto" id="toastTitle"></strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body" id="toastBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/i18n.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+    let _materials = [];
+
+    function showToast(title, body, isError = false) {
+        const toastEl = document.getElementById('toast');
+        document.getElementById('toastTitle').textContent = title;
+        document.getElementById('toastBody').textContent = body;
+        toastEl.classList.toggle('border-danger', isError);
+        toastEl.classList.toggle('border-success', !isError);
+        new bootstrap.Toast(toastEl).show();
+    }
+
+    function renderMaterials() {
+        const body = document.getElementById('materialsBody');
+        const table = document.getElementById('materialsTable');
+        const empty = document.getElementById('emptyState');
+
+        if (!_materials.length) {
+            table.classList.add('d-none');
+            empty.classList.remove('d-none');
+            return;
+        }
+
+        empty.classList.add('d-none');
+        table.classList.remove('d-none');
+        body.innerHTML = '';
+
+        _materials.forEach(m => {
+            const typeBadge = m.type === 'Question'
+                ? `<span class="badge bg-warning">${t('materials.type.question')}</span>`
+                : `<span class="badge bg-info">${t('materials.type.material')}</span>`;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${m.title}</td>
+                <td>${m.lessonName}</td>
+                <td>${typeBadge}</td>
+                <td><small class="text-muted">${m.fileName}</small></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="downloadMaterial(${m.id})" title="${t('courses.download')}">
+                        <i class="bi bi-download"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteMaterial(${m.id})" title="${t('toast.deleted')}">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+            body.appendChild(tr);
+        });
+    }
+
+    async function loadMaterials() {
+        try {
+            _materials = await api.get('Material/my') || [];
+        } catch (e) {
+            _materials = [];
+            console.error('Failed to load materials', e);
+        }
+        document.getElementById('loadingSpinner').classList.add('d-none');
+        renderMaterials();
+    }
+
+    function downloadMaterial(id) {
+        api.downloadFile(`Material/${id}/download`);
+    }
+
+    async function deleteMaterial(id) {
+        if (!confirm(t('confirm.deleteMaterial'))) return;
+        try {
+            await api.delete(`Material/${id}`);
+            _materials = _materials.filter(m => m.id !== id);
+            renderMaterials();
+            showToast('✓', t('materials.deleteSuccess'));
+        } catch (e) {
+            showToast(t('toast.error'), e.message, true);
+        }
+    }
+
+    document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const lessonId = document.getElementById('uploadLesson').value;
+        const title = document.getElementById('uploadTitle').value.trim();
+        const type = document.getElementById('uploadType').value;
+        const file = document.getElementById('uploadFile').files[0];
+
+        if (!lessonId || !title || !file) return;
+
+        const formData = new FormData();
+        formData.append('lessonId', lessonId);
+        formData.append('title', title);
+        formData.append('type', type);
+        formData.append('file', file);
+
+        try {
+            const created = await api.postForm('Material/upload', formData);
+            _materials.unshift(created);
+            renderMaterials();
+            showToast('✓', t('materials.uploadSuccess'));
+
+            // Reset form
+            document.getElementById('uploadTitle').value = '';
+            document.getElementById('uploadFile').value = '';
+            document.getElementById('uploadType').value = '0';
+        } catch (e) {
+            showToast(t('toast.error'), t('materials.uploadError'), true);
+            console.error(e);
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const store = localStorage.getItem('token') ? localStorage : sessionStorage;
+        const token = store.getItem('token');
+
+        if (!token) { window.location.href = 'index.html'; return; }
+        if (store.getItem('userRole') !== 'Teacher') { window.location.href = 'landing.html'; return; }
+
+        document.getElementById('userName').textContent = store.getItem('userName') || store.getItem('userEmail');
+
+        // Load teacher's lessons for the upload dropdown
+        try {
+            const lessons = await api.get('Auth/me/lessons');
+            const select = document.getElementById('uploadLesson');
+            (lessons || []).forEach(l => {
+                const opt = document.createElement('option');
+                opt.value = l.id;
+                opt.textContent = l.name;
+                select.appendChild(opt);
+            });
+        } catch (e) {
+            console.error('Failed to load lessons', e);
+        }
+
+        // Load existing materials
+        await loadMaterials();
+    });
+
+    document.addEventListener('languageChanged', () => renderMaterials());
+    document.getElementById('logoutBtn').addEventListener('click', (e) => { e.preventDefault(); logout(); });
+    </script>
+</body>
+</html>

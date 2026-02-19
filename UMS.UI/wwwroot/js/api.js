@@ -69,6 +69,49 @@ const api = {
         if (response.status === 401) { logout(); return; }
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         return response.json();
+    },
+
+    async postForm(endpoint, formData) {
+        const headers = {};
+        const token = getStorage().getItem('token');
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const response = await fetch(`${API_BASE}/${endpoint}`, {
+            method: 'POST',
+            headers,
+            body: formData
+        });
+        if (response.status === 401) { logout(); return; }
+        if (!response.ok) {
+            const errorBody = await response.text();
+            throw new Error(errorBody || `HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    },
+
+    async downloadFile(endpoint) {
+        const headers = {};
+        const token = getStorage().getItem('token');
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const response = await fetch(`${API_BASE}/${endpoint}`, { headers });
+        if (response.status === 401) { logout(); return; }
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+        const disposition = response.headers.get('Content-Disposition');
+        let fileName = 'download';
+        if (disposition) {
+            const match = disposition.match(/filename\*?=(?:UTF-8'')?["']?([^;"'\n]+)/i);
+            if (match) fileName = decodeURIComponent(match[1]);
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
     }
 };
 

@@ -20,7 +20,9 @@
                         <i class="bi bi-gear-fill"></i>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item text-danger" href="#" id="logoutBtn"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+                        <li><a class="dropdown-item" href="#" id="langToggleBtn">🇦🇿 Azərbaycanca</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" id="logoutBtn"><i class="bi bi-box-arrow-right me-2"></i><span data-i18n="nav.logout">Logout</span></a></li>
                     </ul>
                 </div>
             </div>
@@ -31,9 +33,9 @@
     <div class="container mt-4">
         <div class="d-flex align-items-center mb-4">
             <a href="landing.html" class="btn btn-outline-primary me-3">
-                <i class="bi bi-arrow-left"></i> Back
+                <i class="bi bi-arrow-left"></i> <span data-i18n="btn.back">Back</span>
             </a>
-            <h2 class="mb-0"><i class="bi bi-book-fill text-primary me-2"></i>My Courses</h2>
+            <h2 class="mb-0"><i class="bi bi-book-fill text-primary me-2"></i><span data-i18n="courses.title">My Courses</span></h2>
         </div>
 
         <!-- Loading spinner -->
@@ -46,17 +48,126 @@
         <!-- Empty state -->
         <div id="emptyState" class="d-none text-center py-5">
             <i class="bi bi-journal-x display-1 text-muted"></i>
-            <p class="lead text-muted mt-3">You don't have any courses assigned yet.</p>
-            <a href="landing.html" class="btn btn-primary mt-2">Go Back</a>
+            <p class="lead text-muted mt-3" data-i18n="courses.empty">You don't have any courses assigned yet.</p>
+            <a href="landing.html" class="btn btn-primary mt-2" data-i18n="btn.goBack">Go Back</a>
         </div>
 
         <!-- Lessons list -->
         <div id="lessonsList" class="row g-4 d-none"></div>
     </div>
 
+    <!-- Materials Modal -->
+    <div class="modal fade" id="materialsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-file-earmark-text me-2"></i><span id="materialsModalTitle"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="materialsLoading" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                    <div id="materialsEmpty" class="d-none text-center py-4">
+                        <i class="bi bi-inbox display-4 text-muted"></i>
+                        <p class="text-muted mt-2" data-i18n="courses.noMaterials">No materials available yet.</p>
+                    </div>
+                    <div id="materialsList" class="d-none">
+                        <div class="list-group" id="materialsListGroup"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="btn.cancel">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/i18n.js"></script>
     <script src="js/api.js"></script>
-    <script>document.addEventListener('DOMContentLoaded', async () => {
+    <script>
+    let _lessonsData = null;
+
+    function renderCourses() {
+        const lessonsList = document.getElementById('lessonsList');
+        if (!_lessonsData) return;
+        lessonsList.innerHTML = '';
+
+        const colors = ['primary', 'success', 'info', 'warning', 'danger', 'secondary'];
+        _lessonsData.forEach((lesson, index) => {
+            const color = colors[index % colors.length];
+            const col = document.createElement('div');
+            col.className = 'col-md-6 col-lg-4';
+            col.innerHTML = `
+                <div class="card h-100 shadow-sm course-card" data-lesson-id="${lesson.id}" data-lesson-name="${lesson.name}" role="button">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="rounded-circle bg-${color} bg-opacity-10 p-3 me-3">
+                                <i class="bi bi-book display-6 text-${color}"></i>
+                            </div>
+                            <h5 class="card-title mb-0">${lesson.name}</h5>
+                        </div>
+                        <div class="text-muted small">
+                            <i class="bi bi-file-earmark-text me-1"></i>${t('courses.materials')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            lessonsList.appendChild(col);
+        });
+    }
+
+    async function openMaterials(lessonId, lessonName) {
+        const modal = new bootstrap.Modal(document.getElementById('materialsModal'));
+        document.getElementById('materialsModalTitle').textContent = `${lessonName} — ${t('courses.materials')}`;
+        document.getElementById('materialsLoading').classList.remove('d-none');
+        document.getElementById('materialsEmpty').classList.add('d-none');
+        document.getElementById('materialsList').classList.add('d-none');
+        modal.show();
+
+        try {
+            const materials = await api.get(`Material/lesson/${lessonId}`);
+            document.getElementById('materialsLoading').classList.add('d-none');
+
+            if (!materials || materials.length === 0) {
+                document.getElementById('materialsEmpty').classList.remove('d-none');
+                return;
+            }
+
+            const listGroup = document.getElementById('materialsListGroup');
+            listGroup.innerHTML = '';
+            materials.forEach(m => {
+                const item = document.createElement('div');
+                item.className = 'list-group-item d-flex justify-content-between align-items-center';
+                item.innerHTML = `
+                    <div>
+                        <h6 class="mb-1">${m.title}</h6>
+                        <small class="text-muted">
+                            <i class="bi bi-person me-1"></i>${m.teacherName}
+                            <span class="ms-3"><i class="bi bi-file-earmark me-1"></i>${m.fileName}</span>
+                            ${m.type === 'Question' ? `<span class="badge bg-warning ms-2">${t('materials.type.question')}</span>` : ''}
+                        </small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="downloadMaterial(${m.id})">
+                        <i class="bi bi-download me-1"></i>${t('courses.download')}
+                    </button>
+                `;
+                listGroup.appendChild(item);
+            });
+            document.getElementById('materialsList').classList.remove('d-none');
+        } catch (e) {
+            document.getElementById('materialsLoading').classList.add('d-none');
+            document.getElementById('materialsEmpty').classList.remove('d-none');
+            console.error('Failed to load materials', e);
+        }
+    }
+
+    function downloadMaterial(id) {
+        api.downloadFile(`Material/${id}/download`);
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
         const store = localStorage.getItem('token') ? localStorage : sessionStorage;
         const token = store.getItem('token');
 
@@ -78,32 +189,9 @@
                 return;
             }
 
+            _lessonsData = lessons;
             lessonsList.classList.remove('d-none');
-
-            const colors = ['primary', 'success', 'info', 'warning', 'danger', 'secondary'];
-
-            lessons.forEach((lesson, index) => {
-                const color = colors[index % colors.length];
-                const col = document.createElement('div');
-                col.className = 'col-md-6 col-lg-4';
-                col.innerHTML = `
-                    <div class="card h-100 shadow-sm">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="rounded-circle bg-${color} bg-opacity-10 p-3 me-3">
-                                    <i class="bi bi-book display-6 text-${color}"></i>
-                                </div>
-                                <h5 class="card-title mb-0">${lesson.name}</h5>
-                            </div>
-                            <div class="d-flex justify-content-between text-muted small">
-                                <span><i class="bi bi-people me-1"></i>${lesson.teacherIds?.length || 0} Teacher(s)</span>
-                                <span><i class="bi bi-grid me-1"></i>${lesson.sectionIds?.length || 0} Section(s)</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                lessonsList.appendChild(col);
-            });
+            renderCourses();
         } catch (e) {
             spinner.classList.add('d-none');
             emptyState.classList.remove('d-none');
@@ -111,6 +199,15 @@
         }
     });
 
-    document.getElementById('logoutBtn').addEventListener('click', (e) => { e.preventDefault(); logout(); });</script>
+    // Click on a course card → open materials modal
+    document.getElementById('lessonsList').addEventListener('click', (e) => {
+        const card = e.target.closest('.course-card[data-lesson-id]');
+        if (!card) return;
+        openMaterials(parseInt(card.dataset.lessonId), card.dataset.lessonName);
+    });
+
+    document.addEventListener('languageChanged', () => { if (_lessonsData) renderCourses(); });
+    document.getElementById('logoutBtn').addEventListener('click', (e) => { e.preventDefault(); logout(); });
+    </script>
 </body>
 </html>

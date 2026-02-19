@@ -62,9 +62,9 @@ function renderPersonDetail(person, extraHtml = '') {
             <div class="flex-grow-1">
                 <table class="table table-sm table-bordered mb-0">
                     <tbody>
-                        <tr><th class="text-muted" style="width:140px;">Email</th><td>${escHtml(person.email)}</td></tr>
-                        <tr><th class="text-muted">Phone</th><td>${escHtml(person.phone)}</td></tr>
-                        <tr><th class="text-muted">Date of Birth</th><td>${person.dateOfBirth}</td></tr>
+                        <tr><th class="text-muted" style="width:140px;">${t('label.email')}</th><td>${escHtml(person.email)}</td></tr>
+                        <tr><th class="text-muted">${t('label.phone')}</th><td>${escHtml(person.phone)}</td></tr>
+                        <tr><th class="text-muted">${t('label.dob')}</th><td>${person.dateOfBirth}</td></tr>
                         ${extraHtml}
                     </tbody>
                 </table>
@@ -89,7 +89,7 @@ function setupPhotoUpload(fileInputId, hiddenInputId, previewId, removeBtnId) {
             preview.style.display = 'block';
             removeBtn.classList.remove('d-none');
         } catch (e) {
-            showToast('Upload Error', e.message, false);
+            showToast(t('toast.uploadError'), e.message, false);
         }
     });
 
@@ -151,7 +151,7 @@ document.addEventListener('click', (e) => {
 // ── Smart Picker (search dropdown with 3+ char trigger) ──
 const pickers = {};
 
-function initPicker(id, { multi = true, placeholder = 'Search...', onChange = null } = {}) {
+function initPicker(id, { multi = true, placeholder = null, onChange = null } = {}) {
     const container = document.getElementById(id);
     if (!container) return;
 
@@ -159,10 +159,12 @@ function initPicker(id, { multi = true, placeholder = 'Search...', onChange = nu
     const inputId = `${id}_input`;
     const ddId = `${id}_dd`;
 
+    const ph = placeholder || t('picker.search');
+
     container.innerHTML = `
         <div class="picker-tags" id="${tagsId}"></div>
         <div class="picker-wrap">
-            <input type="text" class="form-control form-control-sm" placeholder="${placeholder}" id="${inputId}" autocomplete="off">
+            <input type="text" class="form-control form-control-sm" placeholder="${ph}" id="${inputId}" autocomplete="off">
             <div class="picker-dropdown" id="${ddId}"></div>
         </div>`;
 
@@ -181,7 +183,7 @@ function initPicker(id, { multi = true, placeholder = 'Search...', onChange = nu
             .slice(0, 10);
 
         dd.innerHTML = matches.length === 0
-            ? '<div class="picker-item disabled">No results</div>'
+            ? `<div class="picker-item disabled">${t('picker.noResults')}</div>`
             : matches.map(i => `<div class="picker-item" data-id="${i.id}">${escHtml(i.label)}</div>`).join('');
         dd.classList.add('show');
     }
@@ -331,12 +333,12 @@ document.getElementById('savePasswordBtn').addEventListener('click', async () =>
     const confirmVal = document.getElementById('confirmPassword').value;
 
     if (newPass !== confirmVal) {
-        errorDiv.textContent = 'New passwords do not match';
+        errorDiv.textContent = t('modal.password.mismatch');
         errorDiv.classList.remove('d-none');
         return;
     }
     if (newPass.length < 6) {
-        errorDiv.textContent = 'Password must be at least 6 characters';
+        errorDiv.textContent = t('modal.password.tooShort');
         errorDiv.classList.remove('d-none');
         return;
     }
@@ -349,7 +351,7 @@ document.getElementById('savePasswordBtn').addEventListener('click', async () =>
         successDiv.classList.remove('d-none');
         setTimeout(() => bootstrap.Modal.getInstance(document.getElementById('changePasswordModal')).hide(), 1500);
     } catch (e) {
-        errorDiv.textContent = 'Current password is incorrect';
+        errorDiv.textContent = t('modal.password.incorrect');
         errorDiv.classList.remove('d-none');
     }
 });
@@ -406,8 +408,8 @@ async function loadStudents() {
         const sectionLabel = s.sectionId
             ? `<span class="badge bg-secondary bg-opacity-75">${escHtml(lookupName(sections, s.sectionId))}</span>`
             : '<span class="text-muted">-</span>';
-        const extraRows = `<tr><th class="text-muted">Class</th><td>${sectionLabel}</td></tr>
-                           <tr><th class="text-muted">Enrollment</th><td>${s.enrollmentDate || '-'}</td></tr>`;
+        const extraRows = `<tr><th class="text-muted">${t('label.class')}</th><td>${sectionLabel}</td></tr>
+                           <tr><th class="text-muted">${t('label.enrollment')}</th><td>${s.enrollmentDate || '-'}</td></tr>`;
         return `
             <tr class="person-row" data-target="student-detail-${s.id}">
                 <td class="text-center"><i class="bi bi-chevron-right section-chevron"></i></td>
@@ -432,7 +434,7 @@ async function openStudentModal(data = null) {
     const sections = await getCached('sections');
     const items = toPickerItems(sections);
 
-    document.getElementById('studentModalTitle').textContent = data ? 'Edit Student' : 'Add Student';
+    document.getElementById('studentModalTitle').textContent = data ? t('modal.student.edit') : t('modal.student.add');
     document.getElementById('studentId').value = data?.id || '';
     document.getElementById('studentName').value = data?.name || '';
     document.getElementById('studentSurname').value = data?.surname || '';
@@ -467,20 +469,20 @@ async function saveStudent() {
         if (id) await api.put(`Student/${id}`, body);
         else await api.post('Student', body);
         bootstrap.Modal.getInstance(document.getElementById('studentModal')).hide();
-        showToast('Student', id ? 'Updated successfully' : 'Created successfully');
+        showToast(t('label.student'), id ? t('toast.updated') : t('toast.created'));
         invalidate('students', 'sections');
         loadStudents(); loadDashboard();
-    } catch (e) { showToast('Error', e.message, false); }
+    } catch (e) { showToast(t('toast.error'), e.message, false); }
 }
 
 async function deleteStudent(id) {
-    if (!confirm('Delete this student?')) return;
+    if (!confirm(t('confirm.deleteStudent'))) return;
     try {
         await api.delete(`Student/${id}`);
-        showToast('Student', 'Deleted');
+        showToast(t('label.student'), t('toast.deleted'));
         invalidate('students', 'sections');
         loadStudents(); loadDashboard();
-    } catch (e) { showToast('Error', e.message, false); }
+    } catch (e) { showToast(t('toast.error'), e.message, false); }
 }
 
 // ── Teachers ──
@@ -490,8 +492,8 @@ async function loadTeachers() {
     ]);
     const colCount = 10; // chevron + ID + Name + Surname + Email + Phone + DOB + Salary + Lessons + Actions
     document.getElementById('teachersTable').innerHTML = data.map(t => {
-        const extraRows = `<tr><th class="text-muted">Salary</th><td>${t.salary}</td></tr>
-                           <tr><th class="text-muted">Lessons</th><td>${renderNames(lessons, t.lessonIds)}</td></tr>`;
+        const extraRows = `<tr><th class="text-muted">${window.t('label.salary')}</th><td>${t.salary}</td></tr>
+                           <tr><th class="text-muted">${window.t('label.lessons')}</th><td>${renderNames(lessons, t.lessonIds)}</td></tr>`;
         return `
             <tr class="person-row" data-target="teacher-detail-${t.id}">
                 <td class="text-center"><i class="bi bi-chevron-right section-chevron"></i></td>
@@ -517,7 +519,7 @@ async function openTeacherModal(data = null) {
     const lessons = await getCached('lessons');
     const items = toPickerItems(lessons);
 
-    document.getElementById('teacherModalTitle').textContent = data ? 'Edit Teacher' : 'Add Teacher';
+    document.getElementById('teacherModalTitle').textContent = data ? t('modal.teacher.edit') : t('modal.teacher.add');
     document.getElementById('teacherId').value = data?.id || '';
     document.getElementById('teacherName').value = data?.name || '';
     document.getElementById('teacherSurname').value = data?.surname || '';
@@ -551,20 +553,20 @@ async function saveTeacher() {
         if (id) await api.put(`Teacher/${id}`, body);
         else await api.post('Teacher', body);
         bootstrap.Modal.getInstance(document.getElementById('teacherModal')).hide();
-        showToast('Teacher', id ? 'Updated successfully' : 'Created successfully');
+        showToast(t('label.teacher'), id ? t('toast.updated') : t('toast.created'));
         invalidate('teachers', 'lessons');
         loadTeachers(); loadDashboard();
-    } catch (e) { showToast('Error', e.message, false); }
+    } catch (e) { showToast(t('toast.error'), e.message, false); }
 }
 
 async function deleteTeacher(id) {
-    if (!confirm('Delete this teacher?')) return;
+    if (!confirm(t('confirm.deleteTeacher'))) return;
     try {
         await api.delete(`Teacher/${id}`);
-        showToast('Teacher', 'Deleted');
+        showToast(t('label.teacher'), t('toast.deleted'));
         invalidate('teachers', 'lessons');
         loadTeachers(); loadDashboard();
-    } catch (e) { showToast('Error', e.message, false); }
+    } catch (e) { showToast(t('toast.error'), e.message, false); }
 }
 
 // ── Expandable row toggle (students, teachers, sections) ──
@@ -601,7 +603,7 @@ async function openLessonModal(data = null) {
         getCached('sections'), getCached('teachers')
     ]);
 
-    document.getElementById('lessonModalTitle').textContent = data ? 'Edit Lesson' : 'Add Lesson';
+    document.getElementById('lessonModalTitle').textContent = data ? t('modal.lesson.edit') : t('modal.lesson.add');
     document.getElementById('lessonId').value = data?.id || '';
     document.getElementById('lessonName').value = data?.name || '';
     resetPicker('lessonSectionPicker', toPickerItems(sections), data?.sectionIds || []);
@@ -625,20 +627,20 @@ async function saveLesson() {
         if (id) await api.put(`Lesson/${id}`, body);
         else await api.post('Lesson', body);
         bootstrap.Modal.getInstance(document.getElementById('lessonModal')).hide();
-        showToast('Lesson', id ? 'Updated successfully' : 'Created successfully');
+        showToast(t('label.lesson'), id ? t('toast.updated') : t('toast.created'));
         invalidate('lessons', 'teachers', 'sections');
         loadLessons(); loadDashboard();
-    } catch (e) { showToast('Error', e.message, false); }
+    } catch (e) { showToast(t('toast.error'), e.message, false); }
 }
 
 async function deleteLesson(id) {
-    if (!confirm('Delete this lesson?')) return;
+    if (!confirm(t('confirm.deleteLesson'))) return;
     try {
         await api.delete(`Lesson/${id}`);
-        showToast('Lesson', 'Deleted');
+        showToast(t('label.lesson'), t('toast.deleted'));
         invalidate('lessons', 'teachers', 'sections');
         loadLessons(); loadDashboard();
-    } catch (e) { showToast('Error', e.message, false); }
+    } catch (e) { showToast(t('toast.error'), e.message, false); }
 }
 
 // ── Sections / Classes ──
@@ -651,7 +653,7 @@ async function loadSections() {
         const count = sectionStudents.length;
 
         const detailRows = sectionStudents.length === 0
-            ? '<tr><td colspan="5" class="text-muted text-center fst-italic">No students assigned</td></tr>'
+            ? `<tr><td colspan="5" class="text-muted text-center fst-italic">${t('sections.noStudents')}</td></tr>`
             : sectionStudents.map(st => `
                 <tr>
                     <td>${escHtml(st.name)}</td>
@@ -666,7 +668,7 @@ async function loadSections() {
                 <td class="text-center"><i class="bi bi-chevron-right section-chevron"></i></td>
                 <td>${s.id}</td>
                 <td>${escHtml(s.name)}</td>
-                <td><span class="badge bg-info">${count} student${count !== 1 ? 's' : ''}</span></td>
+                <td><span class="badge bg-info">${count} ${count !== 1 ? t('student.plural') : t('student.singular')}</span></td>
                 <td>${renderNames(lessons, s.lessonIds)}</td>
                 <td>
                     <button class="btn btn-sm btn-warning" onclick="event.stopPropagation(); editSection(${s.id})"><i class="bi bi-pencil"></i></button>
@@ -677,7 +679,7 @@ async function loadSections() {
                 <td colspan="6" class="p-0 border-0">
                     <div class="section-detail-wrap">
                         <table class="table table-sm table-bordered mb-0">
-                            <thead class="table-light"><tr><th>Name</th><th>Surname</th><th>Date of Birth</th><th>Email</th><th>Phone</th></tr></thead>
+                            <thead class="table-light"><tr><th>${t('students.th.name')}</th><th>${t('students.th.surname')}</th><th>${t('students.th.dob')}</th><th>${t('students.th.email')}</th><th>${t('students.th.phone')}</th></tr></thead>
                             <tbody>${detailRows}</tbody>
                         </table>
                     </div>
@@ -695,7 +697,7 @@ async function openSectionModal(data = null) {
     const editId = data?.id || null;
     const available = students.filter(st => !st.sectionId || st.sectionId === editId);
 
-    document.getElementById('sectionModalTitle').textContent = data ? 'Edit Class' : 'Add Class';
+    document.getElementById('sectionModalTitle').textContent = data ? t('modal.section.edit') : t('modal.section.add');
     document.getElementById('sectionId').value = data?.id || '';
     document.getElementById('sectionName').value = data?.name || '';
     resetPicker('sectionStudentPicker', toPickerItems(available), data?.studentIds || []);
@@ -719,20 +721,20 @@ async function saveSection() {
         if (id) await api.put(`Section/${id}`, body);
         else await api.post('Section', body);
         bootstrap.Modal.getInstance(document.getElementById('sectionModal')).hide();
-        showToast('Class', id ? 'Updated successfully' : 'Created successfully');
+        showToast(t('label.class'), id ? t('toast.updated') : t('toast.created'));
         invalidate('sections', 'students', 'lessons');
         loadSections(); loadDashboard();
-    } catch (e) { showToast('Error', e.message, false); }
+    } catch (e) { showToast(t('toast.error'), e.message, false); }
 }
 
 async function deleteSection(id) {
-    if (!confirm('Delete this class?')) return;
+    if (!confirm(t('confirm.deleteSection'))) return;
     try {
         await api.delete(`Section/${id}`);
-        showToast('Class', 'Deleted');
+        showToast(t('label.class'), t('toast.deleted'));
         invalidate('sections', 'students', 'lessons');
         loadSections(); loadDashboard();
-    } catch (e) { showToast('Error', e.message, false); }
+    } catch (e) { showToast(t('toast.error'), e.message, false); }
 }
 
 // ── Exams ──
@@ -759,7 +761,7 @@ async function openExamModal(data = null) {
         getCached('students'), getCached('lessons')
     ]);
 
-    document.getElementById('examModalTitle').textContent = data ? 'Edit Exam' : 'Add Exam';
+    document.getElementById('examModalTitle').textContent = data ? t('modal.exam.edit') : t('modal.exam.add');
     document.getElementById('examId').value = data?.id || '';
     document.getElementById('examDate').value = data?.examDate || '';
     document.getElementById('examScore').value = data?.score || '';
@@ -787,25 +789,23 @@ async function saveExam() {
         if (id) await api.put(`Exam/${id}`, body);
         else await api.post('Exam', body);
         bootstrap.Modal.getInstance(document.getElementById('examModal')).hide();
-        showToast('Exam', id ? 'Updated successfully' : 'Created successfully');
+        showToast(t('label.exam'), id ? t('toast.updated') : t('toast.created'));
         invalidate('exams');
         loadExams();
-    } catch (e) { showToast('Error', e.message, false); }
+    } catch (e) { showToast(t('toast.error'), e.message, false); }
 }
 
 async function deleteExam(id) {
-    if (!confirm('Delete this exam?')) return;
+    if (!confirm(t('confirm.deleteExam'))) return;
     try {
         await api.delete(`Exam/${id}`);
-        showToast('Exam', 'Deleted');
+        showToast(t('label.exam'), t('toast.deleted'));
         invalidate('exams');
         loadExams();
-    } catch (e) { showToast('Error', e.message, false); }
+    } catch (e) { showToast(t('toast.error'), e.message, false); }
 }
 
 // ── Schedules ──
-const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
 let _allTeacherItems = [];
 let _cachedLessons = [];
 
@@ -830,6 +830,7 @@ async function loadSchedules() {
     const [data, lessons, sections, teachers] = await Promise.all([
         getCached('schedules'), getCached('lessons'), getCached('sections'), getCached('teachers')
     ]);
+    const dayNames = getDayNames();
     document.getElementById('schedulesTable').innerHTML = data.map(s => `
         <tr>
             <td>${s.id}</td>
@@ -854,7 +855,7 @@ async function openScheduleModal(data = null) {
     _cachedLessons = lessons;
     _allTeacherItems = toPickerItems(teachers);
 
-    document.getElementById('scheduleModalTitle').textContent = data ? 'Edit Schedule' : 'Add Schedule';
+    document.getElementById('scheduleModalTitle').textContent = data ? t('modal.schedule.edit') : t('modal.schedule.add');
     document.getElementById('scheduleId').value = data?.id || '';
     document.getElementById('scheduleDayOfWeek').value = data?.dayOfWeek ?? 1;
     document.getElementById('scheduleStartTime').value = data?.startTime || '';
@@ -896,18 +897,18 @@ async function saveSchedule() {
         if (id) await api.put(`Schedule/${id}`, body);
         else await api.post('Schedule', body);
         bootstrap.Modal.getInstance(document.getElementById('scheduleModal')).hide();
-        showToast('Schedule', id ? 'Updated successfully' : 'Created successfully');
+        showToast(t('label.schedule'), id ? t('toast.updated') : t('toast.created'));
         invalidate('schedules');
         loadSchedules();
-    } catch (e) { showToast('Error', e.message, false); }
+    } catch (e) { showToast(t('toast.error'), e.message, false); }
 }
 
 async function deleteSchedule(id) {
-    if (!confirm('Delete this schedule?')) return;
+    if (!confirm(t('confirm.deleteSchedule'))) return;
     try {
         await api.delete(`Schedule/${id}`);
-        showToast('Schedule', 'Deleted');
+        showToast(t('label.schedule'), t('toast.deleted'));
         invalidate('schedules');
         loadSchedules();
-    } catch (e) { showToast('Error', e.message, false); }
+    } catch (e) { showToast(t('toast.error'), e.message, false); }
 }

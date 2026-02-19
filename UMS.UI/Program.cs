@@ -62,6 +62,7 @@ namespace UMS.UI
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IExamService, ExamService>();
             builder.Services.AddScoped<ILessonService, LessonService>();
+            builder.Services.AddScoped<IMaterialService, MaterialService>();
             builder.Services.AddScoped<IScheduleService, ScheduleService>();
             builder.Services.AddScoped<ISectionService, SectionService>();
             builder.Services.AddScoped<IStudentService, StudentService>();
