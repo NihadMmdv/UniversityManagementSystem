@@ -17,11 +17,13 @@ namespace UMS.Service.Services.Implementations
     {
         private readonly CustomDBContext _context;
         private readonly IMapper _mapper;
+        private readonly IPhotoService _photoService;
 
-        public StudentService(CustomDBContext context, IMapper mapper)
+        public StudentService(CustomDBContext context, IMapper mapper, IPhotoService photoService)
         {
             _context = context;
             _mapper = mapper;
+            _photoService = photoService;
         }
 
         public async Task<StudentCreateDTO> CreateAsync(StudentCreateDTO dto)
@@ -29,6 +31,19 @@ namespace UMS.Service.Services.Implementations
             var entity = _mapper.Map<Student>(dto);
             await _context.Set<Student>().AddAsync(entity);
             await _context.SaveChangesAsync();
+
+            // ── Add student to section's StudentIds ──
+            if (entity.SectionId.HasValue)
+            {
+                var section = await _context.Sections.FirstOrDefaultAsync(s => s.Id == entity.SectionId && !s.IsDeleted);
+                if (section != null)
+                {
+                    section.StudentIds ??= new List<int>();
+                    if (!section.StudentIds.Contains(entity.Id))
+                        section.StudentIds.Add(entity.Id);
+                    section.LastModifiedTime = DateTime.UtcNow;
+                }
+            }
 
             // Auto-create a User account for the student
             var user = new User
@@ -72,6 +87,9 @@ namespace UMS.Service.Services.Implementations
 
             if (entity == null)
                 throw new KeyNotFoundException($"Student with id {id} not found.");
+
+            if (!string.IsNullOrEmpty(entity.PhotoUrl) && entity.PhotoUrl != dto.PhotoUrl)
+                _photoService.DeletePhoto(entity.PhotoUrl);
 
             var oldSectionId = entity.SectionId;
 
@@ -125,6 +143,17 @@ namespace UMS.Service.Services.Implementations
 
             if (entity == null) throw new KeyNotFoundException($"Student with id {id} not found.");
 
+            // ── Remove from section's StudentIds ──
+            if (entity.SectionId.HasValue)
+            {
+                var section = await _context.Sections.FirstOrDefaultAsync(s => s.Id == entity.SectionId && !s.IsDeleted);
+                if (section != null)
+                {
+                    section.StudentIds?.Remove(id);
+                    section.LastModifiedTime = DateTime.UtcNow;
+                }
+            }
+
             entity.IsDeleted = true;
             entity.DeletedTime = DateTime.UtcNow;
             entity.LastModifiedTime = DateTime.UtcNow;
@@ -136,6 +165,8 @@ namespace UMS.Service.Services.Implementations
                 user.IsDeleted = true;
                 user.DeletedTime = DateTime.UtcNow;
             }
+
+            _photoService.DeletePhoto(entity.PhotoUrl);
 
             await _context.SaveChangesAsync();
 

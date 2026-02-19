@@ -41,12 +41,14 @@
         box-shadow: 0 8px 24px rgba(13, 110, 253, 0.25) !important;
     }
 
-/* ── Expandable class rows ── */
-.section-row {
+/* ── Expandable rows (sections, students, teachers) ── */
+.section-row,
+.person-row {
     cursor: pointer;
 }
 
-    .section-row:hover {
+    .section-row:hover,
+    .person-row:hover {
         background-color: #f0f0f0;
     }
 

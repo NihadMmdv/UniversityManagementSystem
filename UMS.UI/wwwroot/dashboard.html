@@ -69,8 +69,8 @@
                     <input type="text" class="form-control" id="studentsSearch" placeholder="Search students by name, email, class...">
                 </div>
                 <div class="table-responsive mt-2">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark"><tr><th>ID</th><th>Name</th><th>Surname</th><th>Email</th><th>Phone</th><th>Date of Birth</th><th>Class</th><th>Actions</th></tr></thead>
+                    <table class="table table-striped">
+                        <thead class="table-dark"><tr><th></th><th>ID</th><th>Name</th><th>Surname</th><th>Email</th><th>Phone</th><th>Date of Birth</th><th>Class</th><th>Actions</th></tr></thead>
                         <tbody id="studentsTable"></tbody>
                     </table>
                 </div>
@@ -87,8 +87,8 @@
                     <input type="text" class="form-control" id="teachersSearch" placeholder="Search teachers by name, email, lesson...">
                 </div>
                 <div class="table-responsive mt-2">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark"><tr><th>ID</th><th>Name</th><th>Surname</th><th>Email</th><th>Phone</th><th>Date of Birth</th><th>Salary</th><th>Lessons</th><th>Actions</th></tr></thead>
+                    <table class="table table-striped">
+                        <thead class="table-dark"><tr><th></th><th>ID</th><th>Name</th><th>Surname</th><th>Email</th><th>Phone</th><th>Date of Birth</th><th>Salary</th><th>Lessons</th><th>Actions</th></tr></thead>
                         <tbody id="teachersTable"></tbody>
                     </table>
                 </div>
@@ -179,7 +179,17 @@
                     <div class="mb-3"><label class="form-label">Surname</label><input type="text" class="form-control" id="studentSurname" required></div>
                     <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" id="studentEmail" required></div>
                     <div class="mb-3"><label class="form-label">Phone</label><input type="text" class="form-control" id="studentPhone"></div>
-                    <div class="mb-3"><label class="form-label">Photo URL</label><input type="text" class="form-control" id="studentPhoto"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Photo</label>
+                        <input type="hidden" id="studentPhoto">
+                        <div class="d-flex align-items-center gap-3">
+                            <img id="studentPhotoPreview" src="" alt="" class="rounded-circle" style="width:64px;height:64px;object-fit:cover;display:none;">
+                            <div>
+                                <input type="file" class="form-control form-control-sm" id="studentPhotoFile" accept=".jpg,.jpeg,.png,.webp">
+                                <button type="button" class="btn btn-sm btn-outline-danger mt-1 d-none" id="studentPhotoRemove"><i class="bi bi-x-lg"></i> Remove</button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="mb-3"><label class="form-label">Date of Birth</label><input type="date" class="form-control" id="studentDob" required></div>
                     <div class="mb-3"><label class="form-label">Enrollment Date</label><input type="date" class="form-control" id="studentEnrollment" required></div>
                     <div class="mb-3"><label class="form-label">Class</label><div id="studentSectionPicker"></div></div>
@@ -200,7 +210,17 @@
                     <div class="mb-3"><label class="form-label">Surname</label><input type="text" class="form-control" id="teacherSurname" required></div>
                     <div class="mb-3"><label class="form-label">Email</label><input type="email" class="form-control" id="teacherEmail" required></div>
                     <div class="mb-3"><label class="form-label">Phone</label><input type="text" class="form-control" id="teacherPhone"></div>
-                    <div class="mb-3"><label class="form-label">Photo URL</label><input type="text" class="form-control" id="teacherPhoto"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Photo</label>
+                        <input type="hidden" id="teacherPhoto">
+                        <div class="d-flex align-items-center gap-3">
+                            <img id="teacherPhotoPreview" src="" alt="" class="rounded-circle" style="width:64px;height:64px;object-fit:cover;display:none;">
+                            <div>
+                                <input type="file" class="form-control form-control-sm" id="teacherPhotoFile" accept=".jpg,.jpeg,.png,.webp">
+                                <button type="button" class="btn btn-sm btn-outline-danger mt-1 d-none" id="teacherPhotoRemove"><i class="bi bi-x-lg"></i> Remove</button>
+                            </div>
+                        </div>
+                    </div>
                     <div class="mb-3"><label class="form-label">Date of Birth</label><input type="date" class="form-control" id="teacherDob" required></div>
                     <div class="mb-3"><label class="form-label">Salary</label><input type="number" class="form-control" id="teacherSalary" required></div>
                     <div class="mb-3"><label class="form-label">Lessons</label><div id="teacherLessonPicker"></div></div>

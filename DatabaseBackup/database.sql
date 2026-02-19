@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict kWKfbtYaIj1weD7bIMidbcQanCpjatcH7melsj0LABZkcoWLwrlqkkHVP2wXpcE
+\restrict IfzdLGVT5JouvnnXWUY9ZIOgOSDb2oNyfxY2Zxz73bAFbCESdOlDAZYACetWKhJ
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
 
--- Started on 2026-02-13 13:05:27
+-- Started on 2026-02-19 09:39:40
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -32,9 +32,9 @@ CREATE DATABASE "UMSDB" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PROVI
 
 ALTER DATABASE "UMSDB" OWNER TO postgres;
 
-\unrestrict kWKfbtYaIj1weD7bIMidbcQanCpjatcH7melsj0LABZkcoWLwrlqkkHVP2wXpcE
+\unrestrict IfzdLGVT5JouvnnXWUY9ZIOgOSDb2oNyfxY2Zxz73bAFbCESdOlDAZYACetWKhJ
 \connect "UMSDB"
-\restrict kWKfbtYaIj1weD7bIMidbcQanCpjatcH7melsj0LABZkcoWLwrlqkkHVP2wXpcE
+\restrict IfzdLGVT5JouvnnXWUY9ZIOgOSDb2oNyfxY2Zxz73bAFbCESdOlDAZYACetWKhJ
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -424,8 +424,8 @@ COPY public."Schedules" ("Id", "LessonId", "SectionId", "DayOfWeek", "StartTime"
 
 COPY public."Sections" ("Id", "Name", "LastModifiedTime", "IsDeleted", "DeletedTime", "StudentIds") FROM stdin;
 1	Section A	2026-02-13 10:31:53.521806+04	f	\N	{}
-2	PB501	2026-02-13 11:04:37.774153+04	f	\N	{}
 3	564-1	2026-02-13 11:04:46.197614+04	f	\N	{12,1,2,8,7,9,10}
+2	PB501	2026-02-19 09:33:13.335034+04	f	\N	{13,14}
 \.
 
 
@@ -436,6 +436,10 @@ COPY public."Sections" ("Id", "Name", "LastModifiedTime", "IsDeleted", "DeletedT
 --
 
 COPY public."Students" ("Id", "SectionId", "EnrollmentDate", "LastModifiedTime", "IsDeleted", "Name", "Surname", "Email", "Phone", "PhotoUrl", "DateOfBirth", "DeletedTime") FROM stdin;
+13	2	2022-02-22	2026-02-16 12:47:59.099929+04	f	test	test	test@mail.com	6798644475	test	2000-02-22	\N
+14	2	2026-02-19	\N	f	John	Cooper	johncooper@mail.com	7246322346	/uploads/photos/58d5e69b-d692-4e59-a14d-446c6fe79897.webp	2003-12-05	\N
+9	3	2023-09-01	2026-02-19 09:35:26.382094+04	f	Aylin	Karimova	aylin.karimova@example.com	+994-50-321-8899	/uploads/photos/b84c9796-364a-4a91-87d3-a4d94ffb08bf.webp	1999-11-02	\N
+12	3	2026-02-11	2026-02-19 09:37:08.952202+04	f	Nihad	Mammadov	nyhhat@gmail.com	0703327414	/uploads/photos/d11d3f42-ffb3-4f91-9871-e4f069ff511e.jpg	2006-08-22	\N
 4	\N	2026-02-10	2026-02-13 10:31:07.456486+04	t	2362436wtewwedegs	strsdgdgsgdsgsding	strisdgsdgsdgng	string	string	2026-02-10	2026-02-10 11:04:43.283569+04
 6	\N	2026-02-10	2026-02-13 10:31:07.456486+04	t	sdbhdshds	sgdgsdgssd	string	string	string	2026-02-10	2026-02-10 11:26:01.600943+04
 11	\N	2026-02-11	2026-02-13 10:31:07.456486+04	t	Nihad	Mammadov	nyhhat@gmail.com	0703327414	photourlnihadmammadov	2006-08-22	2026-02-11 12:22:20.553567+04
@@ -443,9 +447,7 @@ COPY public."Students" ("Id", "SectionId", "EnrollmentDate", "LastModifiedTime",
 2	3	2026-02-09	2026-02-13 11:04:46.197613+04	f	string	string	string	string	string	2026-02-09	\N
 7	3	2026-02-11	2026-02-13 11:04:46.197613+04	f	John	Nolan	john.doe@example.com	+1-555-123-4567	https://example.com/photos/john-doe.jpg	2000-01-01	\N
 8	3	2023-09-01	2026-02-13 11:04:46.197613+04	f	John	Doe	john.doe@example.com	+1-555-123-4567	https://example.com/photos/john-doe.jpg	2000-05-14	\N
-9	3	2023-09-01	2026-02-13 11:04:46.197613+04	f	Aylin	Karimova	aylin.karimova@example.com	+994-50-321-8899	https://example.com/photos/aylin-karimova.jpg	1999-11-02	\N
 10	3	2024-02-15	2026-02-13 11:04:46.197614+04	f	Michael	Smith	michael.smith@example.com	+44-7700-900123	https://example.com/photos/michael-smith.jpg	2001-02-27	\N
-12	3	2026-02-11	2026-02-13 11:04:46.197613+04	f	Nihad	Mammadov	nyhhat@gmail.com	0703327414	photourlnihadmammadov	2006-08-22	\N
 \.
 
 
@@ -471,7 +473,7 @@ COPY public."TeacherLesson" ("LessonsId", "TeachersId") FROM stdin;
 COPY public."Teachers" ("Id", "Salary", "LastModifiedTime", "IsDeleted", "Name", "Surname", "Email", "Phone", "PhotoUrl", "DateOfBirth", "DeletedTime") FROM stdin;
 2	1250	\N	f	Jane	Doe	janedoe@mail.com	27272458	photourljanedoe	1986-02-10	\N
 1	940	2026-02-11 14:40:53.107734+04	f	Betty	Williams	bettywilliams@mail.com	2143552321	photourlbettywilliams	1990-07-10	\N
-3	1500	\N	f	Nathan	Ashford	nathanashford@mail.com	4726278321	nathanashfordphotourl	1983-03-05	\N
+3	1500	2026-02-19 09:37:24.052007+04	f	Nathan	Ashford	nathanashford@mail.com	4726278321	/uploads/photos/913396a9-1602-481f-bf0b-349b5a03e418.webp	1983-03-05	\N
 \.
 
 
@@ -485,6 +487,8 @@ COPY public."Users" ("Id", "Email", "PasswordHash", "Role", "Name", "LastModifie
 1	admin@ums.com	$2a$11$Kup77Zr2ozjYi5vOqXCnG.8a9lR6xyJBsqPRotKpYmyKdS8FWLFuy	Admin	Admin	\N	f	\N	\N	\N
 3	nyhhat@gmail.com	$2a$11$aOnvC4.Ro7tEJImuso7BgeKB.3WGFAIIko8VJ2BubtGuOeZywodb6	Student	Nihad Mammadov	\N	f	\N	12	\N
 4	nathanashford@mail.com	$2a$11$lKJladu884uNM98RKKhacu1KctCKsGpCCxIF9hxBYKaj3cHMtOX8G	Teacher	Nathan Ashford	\N	f	\N	\N	3
+5	test@mail.com	$2a$11$AAAv.qPsFUDXsVO3k53Si.0rnn7cL6y7It32xStanC2.RdpiADLLy	Student	test test	\N	f	\N	13	\N
+6	johncooper@mail.com	$2a$11$4Vw/shshyyhzLg79TLpd2uP/NY.GAtbsZK0srAUCvjHHad7xRt22a	Student	John Cooper	\N	f	\N	14	\N
 \.
 
 
@@ -563,7 +567,7 @@ SELECT pg_catalog.setval('public."Sections_Id_seq"', 3, true);
 -- Name: Students_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."Students_Id_seq"', 12, true);
+SELECT pg_catalog.setval('public."Students_Id_seq"', 14, true);
 
 
 --
@@ -581,7 +585,7 @@ SELECT pg_catalog.setval('public."Teachers_Id_seq"', 3, true);
 -- Name: Users_Id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."Users_Id_seq"', 4, true);
+SELECT pg_catalog.setval('public."Users_Id_seq"', 6, true);
 
 
 --
@@ -888,11 +892,11 @@ ALTER TABLE ONLY public."Users"
     ADD CONSTRAINT "FK_Users_Teachers_TeacherId" FOREIGN KEY ("TeacherId") REFERENCES public."Teachers"("Id") ON DELETE SET NULL;
 
 
--- Completed on 2026-02-13 13:05:28
+-- Completed on 2026-02-19 09:39:40
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict kWKfbtYaIj1weD7bIMidbcQanCpjatcH7melsj0LABZkcoWLwrlqkkHVP2wXpcE
+\unrestrict IfzdLGVT5JouvnnXWUY9ZIOgOSDb2oNyfxY2Zxz73bAFbCESdOlDAZYACetWKhJ
 

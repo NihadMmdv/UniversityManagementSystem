@@ -51,6 +51,77 @@ function toPickerItems(list) {
     }));
 }
 
+// ── Photo helpers ──
+function renderPersonDetail(person, extraHtml = '') {
+    const photoHtml = person.photoUrl
+        ? `<img src="${escHtml(person.photoUrl)}" alt="photo" class="rounded-circle" style="width:100px;height:100px;object-fit:cover;">`
+        : '<i class="bi bi-person-circle text-muted" style="font-size:5rem;"></i>';
+
+    return `
+        <div class="d-flex align-items-start gap-4">
+            <div class="flex-grow-1">
+                <table class="table table-sm table-bordered mb-0">
+                    <tbody>
+                        <tr><th class="text-muted" style="width:140px;">Email</th><td>${escHtml(person.email)}</td></tr>
+                        <tr><th class="text-muted">Phone</th><td>${escHtml(person.phone)}</td></tr>
+                        <tr><th class="text-muted">Date of Birth</th><td>${person.dateOfBirth}</td></tr>
+                        ${extraHtml}
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-center flex-shrink-0">${photoHtml}</div>
+        </div>`;
+}
+
+function setupPhotoUpload(fileInputId, hiddenInputId, previewId, removeBtnId) {
+    const fileInput = document.getElementById(fileInputId);
+    const hidden = document.getElementById(hiddenInputId);
+    const preview = document.getElementById(previewId);
+    const removeBtn = document.getElementById(removeBtnId);
+
+    fileInput.addEventListener('change', async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+        try {
+            const result = await api.uploadFile('Photo/upload', file);
+            hidden.value = result.photoUrl;
+            preview.src = result.photoUrl;
+            preview.style.display = 'block';
+            removeBtn.classList.remove('d-none');
+        } catch (e) {
+            showToast('Upload Error', e.message, false);
+        }
+    });
+
+    removeBtn.addEventListener('click', () => {
+        hidden.value = '';
+        preview.src = '';
+        preview.style.display = 'none';
+        fileInput.value = '';
+        removeBtn.classList.add('d-none');
+    });
+}
+
+function setPhotoPreview(hiddenInputId, previewId, removeBtnId, fileInputId, photoUrl) {
+    const hidden = document.getElementById(hiddenInputId);
+    const preview = document.getElementById(previewId);
+    const removeBtn = document.getElementById(removeBtnId);
+    const fileInput = document.getElementById(fileInputId);
+
+    fileInput.value = '';
+    if (photoUrl) {
+        hidden.value = photoUrl;
+        preview.src = photoUrl;
+        preview.style.display = 'block';
+        removeBtn.classList.remove('d-none');
+    } else {
+        hidden.value = '';
+        preview.src = '';
+        preview.style.display = 'none';
+        removeBtn.classList.add('d-none');
+    }
+}
+
 // ── Collapsible name badges ──
 let _collapseId = 0;
 
@@ -184,7 +255,7 @@ function setupSearch(inputId, tableId) {
     input.addEventListener('input', () => {
         const q = input.value.toLowerCase();
         document.querySelectorAll(`#${tableId} tr`).forEach(row => {
-            if (row.classList.contains('section-detail')) {
+            if (row.classList.contains('person-detail') || row.classList.contains('section-detail')) {
                 if (q) row.classList.add('d-none');
                 return;
             }
@@ -221,6 +292,10 @@ document.addEventListener('DOMContentLoaded', () => {
     initPicker('scheduleLessonPicker', { multi: false, onChange: onScheduleLessonChange });
     initPicker('scheduleSectionPicker', { multi: false });
     initPicker('scheduleTeacherPicker', { multi: true });
+
+    // Initialize photo upload handlers
+    setupPhotoUpload('studentPhotoFile', 'studentPhoto', 'studentPhotoPreview', 'studentPhotoRemove');
+    setupPhotoUpload('teacherPhotoFile', 'teacherPhoto', 'teacherPhotoPreview', 'teacherPhotoRemove');
 
     // Initialize search bars
     setupSearch('studentsSearch', 'studentsTable');
@@ -326,16 +401,31 @@ async function loadStudents() {
     const [data, sections] = await Promise.all([
         getCached('students'), getCached('sections')
     ]);
-    document.getElementById('studentsTable').innerHTML = data.map(s => `
-        <tr>
-            <td>${s.id}</td><td>${escHtml(s.name)}</td><td>${escHtml(s.surname)}</td><td>${escHtml(s.email)}</td><td>${escHtml(s.phone)}</td>
-            <td>${s.dateOfBirth}</td>
-            <td>${s.sectionId ? `<span class="badge bg-secondary bg-opacity-75">${escHtml(lookupName(sections, s.sectionId))}</span>` : '<span class="text-muted">-</span>'}</td>
-            <td>
-                <button class="btn btn-sm btn-warning" onclick="editStudent(${s.id})"><i class="bi bi-pencil"></i></button>
-                <button class="btn btn-sm btn-danger" onclick="deleteStudent(${s.id})"><i class="bi bi-trash"></i></button>
-            </td>
-        </tr>`).join('');
+    const colCount = 9; // chevron + ID + Name + Surname + Email + Phone + DOB + Class + Actions
+    document.getElementById('studentsTable').innerHTML = data.map(s => {
+        const sectionLabel = s.sectionId
+            ? `<span class="badge bg-secondary bg-opacity-75">${escHtml(lookupName(sections, s.sectionId))}</span>`
+            : '<span class="text-muted">-</span>';
+        const extraRows = `<tr><th class="text-muted">Class</th><td>${sectionLabel}</td></tr>
+                           <tr><th class="text-muted">Enrollment</th><td>${s.enrollmentDate || '-'}</td></tr>`;
+        return `
+            <tr class="person-row" data-target="student-detail-${s.id}">
+                <td class="text-center"><i class="bi bi-chevron-right section-chevron"></i></td>
+                <td>${s.id}</td>
+                <td>${escHtml(s.name)}</td><td>${escHtml(s.surname)}</td><td>${escHtml(s.email)}</td><td>${escHtml(s.phone)}</td>
+                <td>${s.dateOfBirth}</td>
+                <td>${sectionLabel}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning" onclick="event.stopPropagation(); editStudent(${s.id})"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteStudent(${s.id})"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>
+            <tr class="person-detail d-none" id="student-detail-${s.id}">
+                <td colspan="${colCount}" class="p-0 border-0">
+                    <div class="section-detail-wrap">${renderPersonDetail(s, extraRows)}</div>
+                </td>
+            </tr>`;
+    }).join('');
 }
 
 async function openStudentModal(data = null) {
@@ -348,7 +438,7 @@ async function openStudentModal(data = null) {
     document.getElementById('studentSurname').value = data?.surname || '';
     document.getElementById('studentEmail').value = data?.email || '';
     document.getElementById('studentPhone').value = data?.phone || '';
-    document.getElementById('studentPhoto').value = data?.photoUrl || '';
+    setPhotoPreview('studentPhoto', 'studentPhotoPreview', 'studentPhotoRemove', 'studentPhotoFile', data?.photoUrl || '');
     document.getElementById('studentDob').value = data?.dateOfBirth || '';
     document.getElementById('studentEnrollment').value = data?.enrollmentDate || '';
     resetPicker('studentSectionPicker', items, data?.sectionId ? [data.sectionId] : []);
@@ -398,17 +488,29 @@ async function loadTeachers() {
     const [data, lessons] = await Promise.all([
         getCached('teachers'), getCached('lessons')
     ]);
-    document.getElementById('teachersTable').innerHTML = data.map(t => `
-        <tr>
-            <td>${t.id}</td><td>${escHtml(t.name)}</td><td>${escHtml(t.surname)}</td><td>${escHtml(t.email)}</td><td>${escHtml(t.phone)}</td>
-            <td>${t.dateOfBirth}</td>
-            <td>${t.salary}</td>
-            <td>${renderNames(lessons, t.lessonIds)}</td>
-            <td>
-                <button class="btn btn-sm btn-warning" onclick="editTeacher(${t.id})"><i class="bi bi-pencil"></i></button>
-                <button class="btn btn-sm btn-danger" onclick="deleteTeacher(${t.id})"><i class="bi bi-trash"></i></button>
-            </td>
-        </tr>`).join('');
+    const colCount = 10; // chevron + ID + Name + Surname + Email + Phone + DOB + Salary + Lessons + Actions
+    document.getElementById('teachersTable').innerHTML = data.map(t => {
+        const extraRows = `<tr><th class="text-muted">Salary</th><td>${t.salary}</td></tr>
+                           <tr><th class="text-muted">Lessons</th><td>${renderNames(lessons, t.lessonIds)}</td></tr>`;
+        return `
+            <tr class="person-row" data-target="teacher-detail-${t.id}">
+                <td class="text-center"><i class="bi bi-chevron-right section-chevron"></i></td>
+                <td>${t.id}</td>
+                <td>${escHtml(t.name)}</td><td>${escHtml(t.surname)}</td><td>${escHtml(t.email)}</td><td>${escHtml(t.phone)}</td>
+                <td>${t.dateOfBirth}</td>
+                <td>${t.salary}</td>
+                <td>${renderNames(lessons, t.lessonIds)}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning" onclick="event.stopPropagation(); editTeacher(${t.id})"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteTeacher(${t.id})"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>
+            <tr class="person-detail d-none" id="teacher-detail-${t.id}">
+                <td colspan="${colCount}" class="p-0 border-0">
+                    <div class="section-detail-wrap">${renderPersonDetail(t, extraRows)}</div>
+                </td>
+            </tr>`;
+    }).join('');
 }
 
 async function openTeacherModal(data = null) {
@@ -421,7 +523,7 @@ async function openTeacherModal(data = null) {
     document.getElementById('teacherSurname').value = data?.surname || '';
     document.getElementById('teacherEmail').value = data?.email || '';
     document.getElementById('teacherPhone').value = data?.phone || '';
-    document.getElementById('teacherPhoto').value = data?.photoUrl || '';
+    setPhotoPreview('teacherPhoto', 'teacherPhotoPreview', 'teacherPhotoRemove', 'teacherPhotoFile', data?.photoUrl || '');
     document.getElementById('teacherDob').value = data?.dateOfBirth || '';
     document.getElementById('teacherSalary').value = data?.salary || '';
     resetPicker('teacherLessonPicker', items, data?.lessonIds || []);
@@ -464,6 +566,18 @@ async function deleteTeacher(id) {
         loadTeachers(); loadDashboard();
     } catch (e) { showToast('Error', e.message, false); }
 }
+
+// ── Expandable row toggle (students, teachers, sections) ──
+document.addEventListener('click', (e) => {
+    const row = e.target.closest('.person-row, .section-row');
+    if (!row) return;
+    const detail = document.getElementById(row.dataset.target);
+    if (!detail) return;
+    const isHidden = detail.classList.toggle('d-none');
+    const chevron = row.querySelector('.section-chevron');
+    if (chevron) chevron.classList.toggle('bi-chevron-right', isHidden);
+    if (chevron) chevron.classList.toggle('bi-chevron-down', !isHidden);
+});
 
 // ── Lessons ──
 async function loadLessons() {
@@ -571,18 +685,6 @@ async function loadSections() {
             </tr>`;
     }).join('');
 }
-
-// Toggle handler for expandable class rows
-document.addEventListener('click', (e) => {
-    const row = e.target.closest('.section-row');
-    if (!row) return;
-    const detail = document.getElementById(row.dataset.target);
-    if (!detail) return;
-    const isHidden = detail.classList.toggle('d-none');
-    const chevron = row.querySelector('.section-chevron');
-    if (chevron) chevron.classList.toggle('bi-chevron-right', isHidden);
-    if (chevron) chevron.classList.toggle('bi-chevron-down', !isHidden);
-});
 
 async function openSectionModal(data = null) {
     const [students, lessons] = await Promise.all([

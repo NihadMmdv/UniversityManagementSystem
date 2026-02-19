@@ -7,7 +7,7 @@ using UMS.Service.DTOs.LessonDTOs;
 using UMS.Service.DTOs.ScheduleDTOs;
 using UMS.Service.Services.Interfaces;
 
-namespace UMS.App.Controllers
+namespace UMS.UI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]

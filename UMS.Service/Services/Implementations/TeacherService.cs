@@ -16,11 +16,13 @@ namespace UMS.Service.Services.Implementations
     {
         private readonly CustomDBContext _context;
         private readonly IMapper _mapper;
+        private readonly IPhotoService _photoService;
 
-        public TeacherService(CustomDBContext context, IMapper mapper)
+        public TeacherService(CustomDBContext context, IMapper mapper, IPhotoService photoService)
         {
             _context = context;
             _mapper = mapper;
+            _photoService = photoService;
         }
 
         public async Task<TeacherCreateDTO> CreateAsync(TeacherCreateDTO dto)
@@ -87,6 +89,10 @@ namespace UMS.Service.Services.Implementations
 
             if (entity == null) throw new KeyNotFoundException($"Teacher with id {id} not found.");
 
+            // Delete old photo if exists and is different from the new one
+            if (!string.IsNullOrEmpty(entity.PhotoUrl) && entity.PhotoUrl != dto.PhotoUrl)
+                _photoService.DeletePhoto(entity.PhotoUrl);
+
             _mapper.Map(dto, entity);
 
             if (dto.LessonIds != null)
@@ -133,6 +139,9 @@ namespace UMS.Service.Services.Implementations
                 user.IsDeleted = true;
                 user.DeletedTime = DateTime.UtcNow;
             }
+
+            // Delete photo
+            _photoService.DeletePhoto(entity.PhotoUrl);
 
             await _context.SaveChangesAsync();
 

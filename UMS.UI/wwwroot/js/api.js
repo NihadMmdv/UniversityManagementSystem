@@ -53,11 +53,26 @@ const api = {
         if (response.status === 401) { logout(); return; }
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         return response.json();
+    },
+
+    async uploadFile(endpoint, file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const headers = {};
+        const token = getStorage().getItem('token');
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const response = await fetch(`${API_BASE}/${endpoint}`, {
+            method: 'POST',
+            headers,
+            body: formData
+        });
+        if (response.status === 401) { logout(); return; }
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return response.json();
     }
 };
 
 async function logout() {
-    // Clear swagger cookie directly (now possible without HttpOnly)
     document.cookie = 'swagger_token=; Max-Age=0; path=/;';
     try {
         await fetch(`${API_BASE}/Auth/logout`, { method: 'POST' });

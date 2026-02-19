@@ -66,6 +66,7 @@ namespace UMS.UI
             builder.Services.AddScoped<ISectionService, SectionService>();
             builder.Services.AddScoped<IStudentService, StudentService>();
             builder.Services.AddScoped<ITeacherService, TeacherService>();
+            builder.Services.AddScoped<IPhotoService, PhotoService>();
 
             builder.Services.AddCors(options =>
             {
