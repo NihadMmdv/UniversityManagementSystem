@@ -34,6 +34,7 @@ namespace UMS.UI.Controllers
             if (teacher == null) return Forbid();
 
             var form = await Request.ReadFormAsync();
+            const long MaxFileSize = 5L * 1024 * 1024;
 
             var title = form["title"].ToString();
             if (string.IsNullOrWhiteSpace(title))
@@ -47,10 +48,12 @@ namespace UMS.UI.Controllers
 
             var file = form.Files.GetFile("file");
             if (file is null || file.Length == 0)
-                return BadRequest(new { error = "No file provided." });
+                return BadRequest(new { error = "No file provided or file is empty." });
+            else if (file.Length > MaxFileSize)
+                return BadRequest(new { error = "File size is larger than 5Mb." });
 
-            var result = await _materialService.UploadAsync(
-                teacher.Id, lessonId, title, (MaterialType)type, file);
+                var result = await _materialService.UploadAsync(
+                    teacher.Id, lessonId, title, (MaterialType)type, file);
             return Ok(result);
         }
 
@@ -143,7 +146,7 @@ namespace UMS.UI.Controllers
             }
 
             await _materialService.DeleteAsync(id, material.TeacherId);
-            return NoContent();
+            return Ok(new { message = "Deleted" });
         }
 
         // ─── helpers ───

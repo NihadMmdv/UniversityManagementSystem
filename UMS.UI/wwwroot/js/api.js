@@ -4,6 +4,18 @@ function getStorage() {
     return localStorage.getItem('token') ? localStorage : sessionStorage;
 }
 
+async function safeParseResponse(response) {
+    // No content
+    if (response.status === 204) return null;
+    const text = await response.text();
+    if (!text) return null;
+    try {
+        return JSON.parse(text);
+    } catch {
+        return text;
+    }
+}
+
 const api = {
     getHeaders() {
         const headers = { 'Content-Type': 'application/json' };
@@ -20,7 +32,7 @@ const api = {
         });
         if (response.status === 401) { logout(); return; }
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        return response.json();
+        return safeParseResponse(response);
     },
 
     async post(endpoint, data) {
@@ -31,7 +43,7 @@ const api = {
         });
         if (response.status === 401) { logout(); return; }
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        return response.json();
+        return safeParseResponse(response);
     },
 
     async put(endpoint, data) {
@@ -42,7 +54,7 @@ const api = {
         });
         if (response.status === 401) { logout(); return; }
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        return response.json();
+        return safeParseResponse(response);
     },
 
     async delete(endpoint) {
@@ -52,7 +64,7 @@ const api = {
         });
         if (response.status === 401) { logout(); return; }
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        return response.json();
+        return safeParseResponse(response);
     },
 
     async uploadFile(endpoint, file) {
@@ -68,7 +80,7 @@ const api = {
         });
         if (response.status === 401) { logout(); return; }
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        return response.json();
+        return safeParseResponse(response);
     },
 
     async postForm(endpoint, formData) {
@@ -85,7 +97,7 @@ const api = {
             const errorBody = await response.text();
             throw new Error(errorBody || `HTTP error! status: ${response.status}`);
         }
-        return response.json();
+        return safeParseResponse(response);
     },
 
     async downloadFile(endpoint) {
